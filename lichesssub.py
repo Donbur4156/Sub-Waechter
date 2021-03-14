@@ -239,7 +239,7 @@ async def delete(ctx, arg1):
                "*LOG* - User: **" + user + "** - Command: `" + message + "`\n*RESULT*:\n" + text
         await log_channel.send(text)
         return False
-    lichess_user = arg1
+    lichess_user = arg1.lower()
     connection = sqlite3.connect(config.database)
     cursor = connection.cursor()
     sql = "SELECT * FROM lichesssub WHERE lichessid=?"
