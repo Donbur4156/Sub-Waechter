@@ -212,7 +212,7 @@ async def check(ctx):
             else:
                 text = "Der User **" + dataset[0] + "** ist aktuell weder Subscriber noch Patreon!"
                 await log_channel.send(text)
-                blacklist.append("Discord: **" + dataset[0] + "**")
+                blacklist.append("Lichess: **" + dataset[1] + "** - - Discord: **" + dataset[0] + "**")
     for i in faultylist:
         blacklist.append(i)
     connection.close()
