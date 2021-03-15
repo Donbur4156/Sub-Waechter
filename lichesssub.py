@@ -35,6 +35,7 @@ async def join(ctx, arg1):
     if twitch == 0 and patreon == 0:
         text = "Du scheinst weder Subscriber oder Patreon zu sein. Melde dich bitte bei einem Stream-Mod!"
         await ctx.send(text)
+        discordtag = discord.Member.mention.fget(ctx.author)
         text = "*LOG* - User: **" + discordtag + "** - Command: `" + message + "`\n*RESULT*:\n" + text
         embed = discord.Embed(description=text, color=discord.Color.red())
         await log_channel.send(embed=embed)
@@ -49,6 +50,7 @@ async def join(ctx, arg1):
         text = "Dein Discord Profil ist bereits eingetragen! Wende dich an einen Stream-Mod, wenn du das " \
                "hinterlegte Lichess Profil ändern möchtest."
         await ctx.send(text)
+        discordtag = discord.Member.mention.fget(ctx.author)
         text = "*LOG* - User: **" + discordtag + "** - Command: `" + message + "`\n*RESULT*:\n" + text
         embed = discord.Embed(description=text, color=discord.Color.orange())
         await log_channel.send(embed=embed)
@@ -59,6 +61,7 @@ async def join(ctx, arg1):
     if data:
         text = "Dieses Lichess Profil ist bereits eingetragen!"
         await ctx.send(text)
+        discordtag = discord.Member.mention.fget(ctx.author)
         text = "*LOG* - User: **" + discordtag + "** - Command: `" + message + "`\n*RESULT*:\n" + text
         embed = discord.Embed(description=text, color=discord.Color.orange())
         await log_channel.send(embed=embed)
@@ -72,6 +75,7 @@ async def join(ctx, arg1):
                              "https://lichess.org/team/tbg-subs mit dem Passwort **TBGSub21** bewerben.\n" \
                              "Ein Moderator schaltet dich dann für das Team frei!"
     await ctx.author.send(text)
+    discordtag = discord.Member.mention.fget(ctx.author)
     text = "*LOG* - User: **" + discordtag + "** - Command: `" + message + "`\n*RESULT*:\n" + text
     embed = discord.Embed(description=text, color=discord.Color.green())
     await log_channel.send(embed=embed)
@@ -82,7 +86,7 @@ async def whois(ctx, arg1):
     log_channel_id = config.channelid
     log_channel = bot.get_channel(log_channel_id)
     message = ctx.message.content
-    user = str(ctx.author)
+    user = discord.Member.mention.fget(ctx.author)
     roles = str(discord.Member.roles.fget(ctx.author))
     if config.mod not in roles:
         text = "Du bist nicht berechtigt diese Daten auszulesen!"
@@ -101,7 +105,10 @@ async def whois(ctx, arg1):
         if data[1] == lichessid:
             current = data
     if current:
-        text = "Der Lichessname **" + lichessid + "** ist mit dem Discord Profil **" + current[0] + "** verbunden."
+        server = bot.get_guild(config.serverid)
+        dc_member = server.get_member(user_id=current[4])
+        user_current = discord.Member.mention.fget(dc_member)
+        text = "Der Lichessname **" + lichessid + "** ist mit dem Discord Profil **" + user_current + "** verbunden."
         if current[2] == 1:
             text = text + "\nDer User ist als **Twitch Subscriber** hinterlegt."
         if current[3] == 1:
@@ -132,6 +139,7 @@ async def whichname(ctx):
         lichessid = dataset[0]
         text = "Deine Discord Identität ist mit dem Lichess Profil **" + str(lichessid) + "** verbunden."
         await ctx.author.send(text)
+        user = discord.Member.mention.fget(ctx.author)
         text = "*LOG* - User: **" + user + "** - Command: `" + message + "`\n*RESULT*:\n" + text
         embed = discord.Embed(description=text, color=discord.Color.blue())
         await log_channel.send(embed=embed)
@@ -139,6 +147,7 @@ async def whichname(ctx):
         text = "Du bist mit diesem Discord Profil noch nicht eingetragen! Mit dem Befehl `!join lichessname`" \
                "kannst du dich als Subscriber oder Patreon eintragen."
         await ctx.send(text)
+        user = discord.Member.mention.fget(ctx.author)
         text = "*LOG* - User: **" + user + "** - Command: `" + message + "`\n*RESULT*:\n" + text
         embed = discord.Embed(description=text, color=discord.Color.orange())
         await log_channel.send(embed=embed)
@@ -154,6 +163,7 @@ async def check(ctx):
     if config.mod not in roles:
         text = "Du bist leider nicht berechtigt diese Daten auszulesen!"
         await ctx.send(text)
+        user = discord.Member.mention.fget(ctx.author)
         text = "*LOG* - User: **" + user + "** - Command: `" + message + "`\n*RESULT*:\n" + text
         embed = discord.Embed(description=text, color=discord.Color.red())
         await log_channel.send(embed=embed)
@@ -163,6 +173,8 @@ async def check(ctx):
     cursor = connection.cursor()
     blacklist = []
     faultylist = []
+    changes = []
+    user = discord.Member.mention.fget(ctx.author)
     text = "*LOG* - Ein Datencheck wurde durch den User: **" + user + "** gestartet:"
     embed = discord.Embed(description=text, color=discord.Color.blue())
     await log_channel.send(embed=embed)
@@ -176,50 +188,52 @@ async def check(ctx):
         cursor.execute(sql, (lichessid,))
         dataset = cursor.fetchone()
         if not dataset:
-            text = "Der lichessname **" + lichessid + "** ist nicht in der Datenbank hinterlegt!"
-            await log_channel.send(text)
             blacklist.append("Lichess: **" + lichessid + "** (nicht in Datenbank eingetragen!)")
         else:
             dc_id = dataset[4]
             server = bot.get_guild(config.serverid)
             dc_member = server.get_member(user_id=dc_id)
+            user_current = discord.Member.mention.fget(dc_member)
             roles = str(discord.Member.roles.fget(dc_member))
             if config.role1 in roles or config.role2 in roles:
                 if config.role1 in roles and dataset[2] == 0:
                     sql = "UPDATE lichesssub SET twitch = 1 WHERE discordtag=?"
                     cursor.execute(sql, (dataset[0],))
                     connection.commit()
-                    text = "Dem User **" + dataset[0] + "** wurde der Twitch Sub hinzugefügt!"
-                    await log_channel.send(text)
+                    text = "Dem User **" + user_current + "** wurde der Twitch Sub hinzugefügt!"
+                    changes.append(text)
                 if config.role1 not in roles and dataset[2] == 1:
                     sql = "UPDATE lichesssub SET twitch = 0 WHERE discordtag=?"
                     cursor.execute(sql, (dataset[0],))
                     connection.commit()
-                    text = "Dem User **" + dataset[0] + "** wurde der Twitch Sub entfernt!"
-                    await log_channel.send(text)
+                    text = "Dem User **" + user_current + "** wurde der Twitch Sub entfernt!"
+                    changes.append(text)
                 if config.role2 in roles and dataset[3] == 0:
                     sql = "UPDATE lichesssub SET patreon = 1 WHERE discordtag=?"
                     cursor.execute(sql, (dataset[0],))
                     connection.commit()
-                    text = "Dem User **" + dataset[0] + "** wurde der Patreon Status hinzugefügt!"
-                    await log_channel.send(text)
+                    text = "Dem User **" + user_current + "** wurde der Patreon Status hinzugefügt!"
+                    changes.append(text)
                 if config.role2 not in roles and dataset[3] == 1:
                     sql = "UPDATE lichesssub SET patreon = 0 WHERE discordtag=?"
                     cursor.execute(sql, (dataset[0],))
                     connection.commit()
-                    text = "Dem User **" + dataset[0] + "** wurde der Patreon Status entfernt!"
-                    await log_channel.send(text)
+                    text = "Dem User **" + user_current + "** wurde der Patreon Status entfernt!"
+                    changes.append(text)
             else:
-                text = "Der User **" + dataset[0] + "** ist aktuell weder Subscriber noch Patreon!"
-                await log_channel.send(text)
                 blacklist.append("Lichess: **" + dataset[1] + "** (aktuell weder Subscriber noch Patreon!)")
-    for i in faultylist:
-        blacklist.append(i)
     connection.close()
-    blacklist.sort(key=str.lower)
+    text = ""
     trennzeichen = "\n"
-    blacklist = trennzeichen.join(blacklist)
-    text = "Folgende User sind kein Sub mehr oder sind nicht in der Datenbank eingetragen:\n" + blacklist
+    if blacklist:
+        blacklist = trennzeichen.join(blacklist)
+        text = "Folgende User sind kein Sub mehr oder sind nicht in der Datenbank eingetragen:\n" + blacklist
+    if faultylist:
+        faultylist = trennzeichen.join(faultylist)
+        text = "Folgende User wurden von lichess geflaggt:\n" + faultylist + text
+    if changes:
+        changes = trennzeichen.join(changes)
+        text = "Folgende Änderungen wurden vorgenommen:\n" + changes + text
     text = "*LOG* - User: **" + user + "** - Command: `" + message + "`\n*RESULT*:\n" + text
     embed = discord.Embed(description=text, color=discord.Color.blue())
     await log_channel.send(embed=embed)
@@ -230,7 +244,7 @@ async def delete(ctx, arg1):
     log_channel_id = config.channelid
     log_channel = bot.get_channel(log_channel_id)
     message = ctx.message.content
-    user = str(ctx.author)
+    user = discord.Member.mention.fget(ctx.author)
     roles = str(discord.Member.roles.fget(ctx.author))
     if config.mod not in roles:
         text = "du bist nicht berechtigt dies zu tun!"
