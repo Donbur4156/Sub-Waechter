@@ -82,7 +82,7 @@ async def join(ctx, arg1):
 
 
 @bot.command()
-async def whois(ctx, arg1):
+async def saydiscord(ctx, arg1):
     log_channel_id = config.channelid
     log_channel = bot.get_channel(log_channel_id)
     message = ctx.message.content
@@ -118,6 +118,47 @@ async def whois(ctx, arg1):
         await log_channel.send(embed=embed)
     else:
         text = "Der Lichessname " + lichessid + " ist bisher mit keinem Discord Profil verbunden!"
+        text = "*LOG* - User: **" + user + "** - Command: `" + message + "`\n*RESULT*:\n" + text
+        embed = discord.Embed(description=text, color=discord.Color.blue())
+        await log_channel.send(embed=embed)
+    connection.close()
+
+
+@bot.command()
+async def saylichess(ctx, arg1):
+    log_channel_id = config.channelid
+    log_channel = bot.get_channel(log_channel_id)
+    message = ctx.message.content
+    user = discord.Member.mention.fget(ctx.author)
+    roles = str(discord.Member.roles.fget(ctx.author))
+    if config.mod not in roles:
+        text = "Du bist nicht berechtigt diese Daten auszulesen!"
+        await ctx.send(text)
+        text = "*LOG* - User: **" + user + "** - Command: `" + message + "`\n*RESULT*:\n" + text
+        embed = discord.Embed(description=text, color=discord.Color.red())
+        await log_channel.send(embed=embed)
+        return False
+    discordid = arg1
+    connection = sqlite3.connect(config.database)
+    cursor = connection.cursor()
+    sql = "SELECT * FROM lichesssub"
+    cursor.execute(sql)
+    current = False
+    for data in cursor:
+        if data[0] == discordid:
+            current = data
+    if current:
+        user_current = current[1]
+        text = "Der Discord User **" + discordid + "** ist mit dem Lichess Account **" + user_current + "** verbunden."
+        if current[2] == 1:
+            text = text + "\nDer User ist als **Twitch Subscriber** hinterlegt."
+        if current[3] == 1:
+            text = text + "\nDer User ist als **Patreon** hinterlegt."
+        text = "*LOG* - User: **" + user + "** - Command: `" + message + "`\n*RESULT*:\n" + text
+        embed = discord.Embed(description=text, color=discord.Color.blue())
+        await log_channel.send(embed=embed)
+    else:
+        text = "Der Discord User " + discordid + " ist bisher mit keinem Lichess Acccount verbunden!"
         text = "*LOG* - User: **" + user + "** - Command: `" + message + "`\n*RESULT*:\n" + text
         embed = discord.Embed(description=text, color=discord.Color.blue())
         await log_channel.send(embed=embed)
