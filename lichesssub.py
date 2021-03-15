@@ -139,7 +139,7 @@ async def saylichess(ctx, arg1):
         embed = discord.Embed(description=text, color=discord.Color.red())
         await log_channel.send(embed=embed)
         return False
-    discord_id = arg1
+    discord_id = int(arg1)
     connection = sqlite3.connect(config.database)
     cursor = connection.cursor()
     sql = "SELECT * FROM lichesssub"
