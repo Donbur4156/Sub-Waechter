@@ -230,10 +230,10 @@ async def check(ctx):
         text = "Folgende User sind kein Sub mehr oder sind nicht in der Datenbank eingetragen:\n" + blacklist
     if faultylist:
         faultylist = trennzeichen.join(faultylist)
-        text = "Folgende User wurden von lichess geflaggt:\n" + faultylist + text
+        text = "Folgende User wurden von lichess geflaggt:\n" + faultylist + "\n\n" + text
     if changes:
         changes = trennzeichen.join(changes)
-        text = "Folgende Änderungen wurden vorgenommen:\n" + changes + text
+        text = "Folgende Änderungen wurden vorgenommen:\n" + changes + "\n\n" + text
     text = "*LOG* - User: **" + user + "** - Command: `" + message + "`\n*RESULT*:\n" + text
     embed = discord.Embed(description=text, color=discord.Color.blue())
     await log_channel.send(embed=embed)
