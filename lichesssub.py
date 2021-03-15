@@ -72,7 +72,7 @@ async def join(ctx, arg1):
     connection.close()
     text = "Deine Discord Identität wurde erfolgreich mit dem Lichessnamen *" \
            "*" + lichessid + "** verbunden!\nDu kannst dich nun bei unserem Lichess Team " \
-                             "https://lichess.org/team/tbg-subs mit dem Passwort **TBGSub21** bewerben.\n" \
+                             "https://lichess.org/team/" + config.team + " mit dem Passwort **TBGSub21** bewerben.\n" \
                              "Ein Moderator schaltet dich dann für das Team frei!"
     await ctx.author.send(text)
     discordtag = discord.Member.mention.fget(ctx.author)
@@ -263,7 +263,8 @@ async def delete(ctx, arg1):
         sql = "DELETE FROM lichesssub WHERE lichessid=?"
         cursor.execute(sql, (lichess_user,))
         connection.commit()
-        text = "Der User mit dem Discord tag **" + data[0] + "** wurde aus der Datenbank entfernt!"
+        current = discord.Member.mention.fget(data[0])
+        text = "Der User mit dem Discord tag **" + current + "** wurde aus der Datenbank entfernt!"
     else:
         text = "Dieses Lichess Profil ist mit keiner Discord Identität verknüpft!"
     text = "*LOG* - User: **" + user + "** - Command: `" + message + "`\n*RESULT*:\n" + text
