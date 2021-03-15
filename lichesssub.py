@@ -263,7 +263,9 @@ async def delete(ctx, arg1):
         sql = "DELETE FROM lichesssub WHERE lichessid=?"
         cursor.execute(sql, (lichess_user,))
         connection.commit()
-        current = discord.Member.mention.fget(data[0])
+        server = bot.get_guild(config.serverid)
+        dc_member = server.get_member(user_id=data[4])
+        current = discord.Member.mention.fget(dc_member)
         text = "Der User mit dem Discord tag **" + current + "** wurde aus der Datenbank entfernt!"
     else:
         text = "Dieses Lichess Profil ist mit keiner Discord Identität verknüpft!"
