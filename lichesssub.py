@@ -149,10 +149,9 @@ async def saylichess(ctx, arg1):
         if data[0] == discordid:
             current = data
             break
+    discordid = discord.Member.mention.fget(discordid)
     if current:
-        server = bot.get_guild(config.serverid)
-        dc_member = server.get_member(user_id=current[4])
-        user_current = discord.Member.mention.fget(dc_member)
+        user_current = current[1]
         text = "Der Discord User **" + discordid + "** ist mit dem Lichess Account **" + user_current + "** verbunden."
         if current[2] == 1:
             text = text + "\nDer User ist als **Twitch Subscriber** hinterlegt."
