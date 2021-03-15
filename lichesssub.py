@@ -104,6 +104,7 @@ async def saydiscord(ctx, arg1):
     for data in cursor:
         if data[1] == lichessid:
             current = data
+            break
     if current:
         server = bot.get_guild(config.serverid)
         dc_member = server.get_member(user_id=current[4])
@@ -147,8 +148,11 @@ async def saylichess(ctx, arg1):
     for data in cursor:
         if data[0] == discordid:
             current = data
+            break
     if current:
-        user_current = current[1]
+        server = bot.get_guild(config.serverid)
+        dc_member = server.get_member(user_id=current[4])
+        user_current = discord.Member.mention.fget(dc_member)
         text = "Der Discord User **" + discordid + "** ist mit dem Lichess Account **" + user_current + "** verbunden."
         if current[2] == 1:
             text = text + "\nDer User ist als **Twitch Subscriber** hinterlegt."
@@ -193,6 +197,7 @@ async def whichname(ctx):
         embed = discord.Embed(description=text, color=discord.Color.orange())
         await log_channel.send(embed=embed)
     connection.close()
+
 
 @bot.command()
 async def check(ctx):
