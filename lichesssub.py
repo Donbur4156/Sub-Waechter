@@ -139,20 +139,22 @@ async def saylichess(ctx, arg1):
         embed = discord.Embed(description=text, color=discord.Color.red())
         await log_channel.send(embed=embed)
         return False
-    discordid = arg1
+    discord_id = arg1
     connection = sqlite3.connect(config.database)
     cursor = connection.cursor()
     sql = "SELECT * FROM lichesssub"
     cursor.execute(sql)
     current = False
     for data in cursor:
-        if data[0] == discordid:
+        if data[4] == discord_id:
             current = data
             break
-    discordid = discord.Member.mention.fget(discordid)
+    server = bot.get_guild(config.serverid)
+    discord_id = server.get_member(user_id=discord_id)
+    discord_id = discord.Member.mention.fget(discord_id)
     if current:
         user_current = current[1]
-        text = "Der Discord User **" + discordid + "** ist mit dem Lichess Account **" + user_current + "** verbunden."
+        text = "Der Discord User **" + discord_id + "** ist mit dem Lichess Account **" + user_current + "** verbunden."
         if current[2] == 1:
             text = text + "\nDer User ist als **Twitch Subscriber** hinterlegt."
         if current[3] == 1:
@@ -161,7 +163,7 @@ async def saylichess(ctx, arg1):
         embed = discord.Embed(description=text, color=discord.Color.blue())
         await log_channel.send(embed=embed)
     else:
-        text = "Der Discord User " + discordid + " ist bisher mit keinem Lichess Acccount verbunden!"
+        text = "Der Discord User " + discord_id + " ist bisher mit keinem Lichess Acccount verbunden!"
         text = "*LOG* - User: **" + user + "** - Command: `" + message + "`\n*RESULT*:\n" + text
         embed = discord.Embed(description=text, color=discord.Color.blue())
         await log_channel.send(embed=embed)
