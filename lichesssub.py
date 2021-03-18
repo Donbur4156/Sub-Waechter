@@ -279,7 +279,7 @@ async def check(ctx):
         else:
             index = len(text)
             text_print = text
-        await send_embed_log(ctx, text_print, discord.Color.blue())
+        await send_embed_log(ctx, text_print, discord.Color.purple())
         text = text[index:]
     await ctx.message.delete(delay=120)
 
