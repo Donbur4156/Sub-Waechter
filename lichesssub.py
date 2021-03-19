@@ -42,6 +42,10 @@ async def modcommands(ctx):
     embed.add_field(name="**!check**", value=text, inline=False)
     text = "Gibt eine CSV Datei zurück mit allen eingetragenen Usern."
     embed.add_field(name="**!getlist**", value=text, inline=False)
+    text = "Gibt das aktuelle Passwort wieder."
+    embed.add_field(name="**!getpassword**", value=text, inline=False)
+    text = "Ändert das aktuelle Passwort in das neu angegebene."
+    embed.add_field(name="**!changepassword**", value=text, inline=False)
     await ctx.send(embed=embed)
 
 
@@ -103,8 +107,7 @@ async def join(ctx, arg1):
 
 @bot.command()
 async def saydiscord(ctx, arg1):
-    proved = await prove(ctx)
-    if not proved:
+    if not await prove(ctx):
         return False
     lichessid = arg1.lower()
     connection = sqlite3.connect(config.database)
@@ -136,8 +139,7 @@ async def saydiscord(ctx, arg1):
 
 @bot.command()
 async def saylichess(ctx, arg1):
-    proved = await prove(ctx)
-    if not proved:
+    if not await prove(ctx):
         return False
     discord_id = int(arg1)
     connection = sqlite3.connect(config.database)
@@ -193,8 +195,7 @@ async def whichname(ctx):
 
 @bot.command()
 async def check(ctx):
-    proved = await prove(ctx)
-    if not proved:
+    if not await prove(ctx):
         return False
     data = getdata(config.team)
     connection = sqlite3.connect(config.database)
@@ -286,8 +287,7 @@ async def check(ctx):
 
 @bot.command()
 async def delete(ctx, arg1):
-    proved = await prove(ctx)
-    if not proved:
+    if not await prove(ctx):
         return False
     lichess_user = arg1.lower()
     connection = sqlite3.connect(config.database)
@@ -312,11 +312,48 @@ async def delete(ctx, arg1):
 
 @bot.command()
 async def getlist(ctx):
-    proved = await prove(ctx)
-    if not proved:
+    if not await prove(ctx):
         return False
     msg = await ctx.send("Dieses Feature ist in der Entwicklung!")
     await msg.delete(delay=120)
+    await ctx.message.delete(delay=120)
+
+
+@bot.command()
+async def getpassword(ctx):
+    if not await prove(ctx):
+        return False
+    connection = sqlite3.connect(config.database)
+    cursor = connection.cursor()
+    sql = "SELECT password FROM config WHERE serverid=?"
+    password = cursor.execute(sql, (config.serverid,))
+    password = password.fetchone()[0]
+    text = "Das aktuelle Passwort für das Lichess Subscriber Team lautet: **" + password + "**"
+    await send_embed_log(ctx, text, discord.Color.blue())
+    await ctx.message.delete(delay=120)
+    connection.close()
+
+
+@bot.command()
+async def changepassword(ctx, arg1):
+    if not await prove(ctx):
+        return False
+    connection = sqlite3.connect(config.database)
+    cursor = connection.cursor()
+    sql = "SELECT password FROM config WHERE serverid=?"
+    password = cursor.execute(sql, (config.serverid,))
+    password_old = password.fetchone()[0]
+    password_new = arg1
+    if password_old != password_new:
+        sql = "UPDATE config SET password=? WHERE serverid=?"
+        cursor.execute(sql, (password_new, config.serverid,))
+        text = "Das Passwort für das Lichess Subscriber Team wurde erfolgreich zu **" + password_new + "** geändert!"
+        await send_embed_log(ctx, text, discord.Color.green())
+    else:
+        text = "Das neue Passwort entspricht dem alten Passwort und wurde nicht geändert!"
+        await send_embed_log(ctx, text, discord.Color.orange())
+    await ctx.message.delete(delay=120)
+    connection.close()
 
 
 @bot.command()

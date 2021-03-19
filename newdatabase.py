@@ -18,4 +18,10 @@ sql = "CREATE TABLE lichesssub(" \
       "patreon INTEGER," \
       "discordid INTEGER)"
 cursor.execute(sql)
+
+sql = "CREATE TABLE config(" \
+      "serverid INTEGER," \
+      "password TEXT)"
+cursor.execute(sql)
+
 connection.close()
