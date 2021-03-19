@@ -347,6 +347,7 @@ async def changepassword(ctx, arg1):
     if password_old != password_new:
         sql = "UPDATE config SET password=? WHERE serverid=?"
         cursor.execute(sql, (password_new, config.serverid,))
+        connection.commit()
         text = "Das Passwort für das Lichess Subscriber Team wurde erfolgreich zu **" + password_new + "** geändert!"
         await send_embed_log(ctx, text, discord.Color.green())
     else:
