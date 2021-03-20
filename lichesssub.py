@@ -31,8 +31,8 @@ async def commands(ctx):
 @bot.command()
 async def modcommands(ctx):
     text = "Folgende Commands stehen den Moderatoren zur Verfügung:"
-    embed = discord.Embed(title="**HELP**", color=discord.Color.gold(), description=text)
-    text = "Gibt das Lichess Profil zurück, der mit dem Discord Profil verknüpft ist."
+    embed = discord.Embed(title="**Mod Commands**", color=discord.Color.gold(), description=text)
+    text = "Gibt das Lichess Profil zurück, das mit dem Discord Profil verknüpft ist."
     embed.add_field(name="**!saylichess discordUserID**", value=text, inline=False)
     text = "Gibt das Discord Profil zurück, das mit dem Lichess Profil verknüpft ist."
     embed.add_field(name="**!saydiscord lichessname**", value=text, inline=False)
@@ -45,7 +45,9 @@ async def modcommands(ctx):
     text = "Gibt das aktuelle Passwort wieder."
     embed.add_field(name="**!getpassword**", value=text, inline=False)
     text = "Ändert das aktuelle Passwort in das neu angegebene."
-    embed.add_field(name="**!changepassword**", value=text, inline=False)
+    embed.add_field(name="**!changepassword neuesPasswort**", value=text, inline=False)
+    text = "Räumt den Kanal tbg-vs-subs auf. Nur dort ausführbar!"
+    embed.add_field(name="**!clean**", value=text, inline=False)
     await ctx.send(embed=embed)
 
 
@@ -372,6 +374,27 @@ async def ping(ctx):
     await ctx.message.delete(delay=60)
 
 
+@bot.command()
+async def clean(ctx):
+    if not await prove(ctx):
+        return False
+    if not ctx.message.channel.id == config.channel_subs_id:
+        msg = await ctx.send("Dieser Befehl ist hier nicht verfügbar!")
+        await msg.delete(delay=120)
+        await ctx.message.delete(delay=120)
+        return False
+    counter = 0
+    async for message in ctx.history(limit=200):
+        if not message.pinned:
+            await message.delete()
+            counter += 1
+    channel_name = ctx.message.channel.mention
+    text = "Es wurden " + str(counter) + " Nachrichten im Channel " + channel_name + " gelöscht!"
+    msg = await ctx.send(text)
+    await msg.delete(delay=120)
+    await send_embed_log(ctx, text, discord.Color.blurple())
+
+
 def getdata(id_team):
     url = "https://lichess.org/api/team/" + id_team + "/users"
     param = dict()
@@ -395,7 +418,7 @@ async def prove(ctx):
 
 
 async def send_embed_log(ctx, text, color):
-    log_channel = bot.get_channel(config.channelid)
+    log_channel = bot.get_channel(config.channel_log_id)
     message = ctx.message.content
     user = discord.Member.mention.fget(ctx.author)
     embed = discord.Embed(
