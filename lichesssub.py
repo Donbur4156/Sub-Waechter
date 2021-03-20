@@ -98,9 +98,10 @@ async def join(ctx, arg1):
                    (discordtag, lichessid, twitch, patreon, discordid))
     connection.commit()
     connection.close()
+    password = await return_password()
     text = "Deine Discord Identität wurde erfolgreich mit dem Lichessnamen *" \
            "*" + lichessid + "** verbunden!\nDu kannst dich nun bei unserem Lichess Team " \
-           "https://lichess.org/team/" + config.team + " mit dem Passwort **" + config.password + "** bewerben.\n" \
+           "https://lichess.org/team/" + config.team + " mit dem Passwort **" + password + "** bewerben.\n" \
            "Ein Moderator schaltet dich dann für das Team frei!"
     await ctx.author.send(text)
     await send_embed_log(ctx, text, discord.Color.blue())
@@ -325,15 +326,20 @@ async def getlist(ctx):
 async def getpassword(ctx):
     if not await prove(ctx):
         return False
+    password = await return_password()
+    text = "Das aktuelle Passwort für das Lichess Subscriber Team lautet: **" + password + "**"
+    await send_embed_log(ctx, text, discord.Color.blue())
+    await ctx.message.delete(delay=120)
+
+
+async def return_password():
     connection = sqlite3.connect(config.database)
     cursor = connection.cursor()
     sql = "SELECT password FROM config WHERE serverid=?"
     password = cursor.execute(sql, (config.serverid,))
     password = password.fetchone()[0]
-    text = "Das aktuelle Passwort für das Lichess Subscriber Team lautet: **" + password + "**"
-    await send_embed_log(ctx, text, discord.Color.blue())
-    await ctx.message.delete(delay=120)
     connection.close()
+    return password
 
 
 @bot.command()
