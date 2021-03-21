@@ -103,7 +103,7 @@ async def join(ctx, arg1):
            "*" + lichessid + "** verbunden!\nDu kannst dich nun bei unserem Lichess Team " \
            "https://lichess.org/team/" + config.team + " mit dem Passwort **" + password + "** bewerben.\n" \
            "Ein Moderator schaltet dich dann für das Team frei!"
-    await ctx.author.send(text)
+    await ctx.author.send(text)  # TODO: Exception "Cannot send messages to this user"
     await send_embed_log(ctx, text, discord.Color.blue())
     await ctx.message.delete(delay=120)
 
@@ -205,19 +205,20 @@ async def check(ctx):
     cursor = connection.cursor()
     blacklist = []
     no_list_entry = []
-    faultylist = []
+    faulty_list = []
     changes = []
+    lost_user = []
     for i in data:
-        lichessid = i.get("id")
+        lichess_id = i.get("id")
         faulty = i.get("tosViolation")
         if faulty:
-            text = "Der User **" + lichessid + "** hat gegen die Lichess Nutzungsbedinungen verstossen!"
-            faultylist.append(text)
+            text = "Der User **" + lichess_id + "** hat gegen die Lichess Nutzungsbedinungen verstossen!"
+            faulty_list.append(text)
         sql = "SELECT * FROM lichesssub WHERE lichessid=?"
-        cursor.execute(sql, (lichessid,))
+        cursor.execute(sql, (lichess_id,))
         dataset = cursor.fetchone()
         if not dataset:
-            no_list_entry.append("Lichess: **" + lichessid + "** (nicht in Datenbank eingetragen!)")
+            no_list_entry.append("Lichess: **" + lichess_id + "** (nicht in Datenbank eingetragen!)")
         else:
             try:
                 dc_id = dataset[4]
@@ -251,33 +252,37 @@ async def check(ctx):
                         text = "Dem User **" + user_current + "** wurde der Patreon Status entfernt!"
                         changes.append(text)
                 else:
-                    blacklist.append("Lichess: **" + dataset[1] + "** (aktuell weder Subscriber noch Patreon!)")
+                    sql = "UPDATE lichesssub SET patreon = 0, twitch = 0 WHERE discordtag=?"
+                    cursor.execute(sql, (dataset[0],))
+                    connection.commit()
+                    blacklist.append(user_current + ": **" + dataset[1] + "**")
             except AttributeError:
                 text = "Der User mit dem Discord tag **" + dataset[0] + "** und dem Lichess Profil" \
                        " **" + dataset[1] + "** konnte auf diesem Server nicht gefunden werden!"
-                blacklist.append(text)
+                lost_user.append(text)
     connection.close()
     text = ""
     trennzeichen = "\n"
     if no_list_entry:
         no_list_entry = trennzeichen.join(no_list_entry)
-        text = "Folgende User sind nicht in der Datenbank eingetragen:\n" + no_list_entry + "\n\n" + text
+        text = "__**Folgende User sind nicht in der Datenbank eingetragen:**__\n" + no_list_entry + "\n\n" + text
+    if lost_user:
+        lost_user = trennzeichen.join(lost_user)
+        text = "__**Folgende User konnten nicht auf dem Server gefunden werden:**__\n" + lost_user + "\n\n" + text
     if blacklist:
         blacklist = trennzeichen.join(blacklist)
-        text = "Folgende User sind kein Sub mehr oder nicht mehr auf dem Server :\n" + blacklist + "\n\n" + text
-    if faultylist:
-        faultylist = trennzeichen.join(faultylist)
-        text = "Folgende User wurden von lichess geflaggt:\n" + faultylist + "\n\n" + text
+        text = "__**Folgende User sind nicht mehr als Subscriber/Patreon hinterlegt:**__\n" + blacklist + "\n\n" + text
+    if faulty_list:
+        faulty_list = trennzeichen.join(faulty_list)
+        text = "__**Folgende User wurden von lichess geflaggt:**__\n" + faulty_list + "\n\n" + text
     if changes:
         changes = trennzeichen.join(changes)
-        text = "Folgende Änderungen wurden vorgenommen:\n" + changes + "\n\n" + text
+        text = "__**Folgende Änderungen wurden vorgenommen:**__\n" + changes + "\n\n" + text
     while len(text) > 0:
-        if len(text) > 5000:
+        if len(text) > 5500:
             index = 0
-            while index < 4800:
+            while index < 5200:
                 index = text.find("\n", index) + 2
-                print("Schleife")
-                print(index)
             index -= 1
             text_print = text[:index]
         else:
@@ -317,7 +322,7 @@ async def delete(ctx, arg1):
 async def getlist(ctx):
     if not await prove(ctx):
         return False
-    msg = await ctx.send("Dieses Feature ist in der Entwicklung!")
+    msg = await ctx.send("Dieses Feature ist in der Entwicklung!")  # TODO: Fertig stellen
     await msg.delete(delay=120)
     await ctx.message.delete(delay=120)
 
@@ -346,23 +351,21 @@ async def return_password():
 async def changepassword(ctx, arg1):
     if not await prove(ctx):
         return False
-    connection = sqlite3.connect(config.database)
-    cursor = connection.cursor()
-    sql = "SELECT password FROM config WHERE serverid=?"
-    password = cursor.execute(sql, (config.serverid,))
-    password_old = password.fetchone()[0]
+    password_old = await return_password()
     password_new = arg1
     if password_old != password_new:
+        connection = sqlite3.connect(config.database)
+        cursor = connection.cursor()
         sql = "UPDATE config SET password=? WHERE serverid=?"
         cursor.execute(sql, (password_new, config.serverid,))
         connection.commit()
+        connection.close()
         text = "Das Passwort für das Lichess Subscriber Team wurde erfolgreich zu **" + password_new + "** geändert!"
         await send_embed_log(ctx, text, discord.Color.green())
     else:
         text = "Das neue Passwort entspricht dem alten Passwort und wurde nicht geändert!"
         await send_embed_log(ctx, text, discord.Color.orange())
     await ctx.message.delete(delay=120)
-    connection.close()
 
 
 @bot.command()
@@ -429,19 +432,22 @@ async def send_embed_log(ctx, text, color):
     user = discord.Member.mention.fget(ctx.author)
     embed = discord.Embed(
         title="*LOG*", color=color, description=user + ": " + message, timestamp=datetime.datetime.utcnow())
+    print_count = 1
     while len(text) > 0:
         if len(text) > 1000:
             index = 0
-            while index < 900:
+            while index < 800:
                 index = text.find("\n", index) + 2
-                print("Schleife")
-                print(index)
             index -= 1
             text_print = text[:index]
         else:
             index = len(text)
             text_print = text
-        embed.add_field(name="*RESULT*", value=text_print, inline=False)
+        if print_count == 1:
+            embed.add_field(name="*RESULT*", value=text_print, inline=False)
+            print_count -= 1
+        else:
+            embed.add_field(name="\u200b", value=text_print, inline=False)
         text = text[index:]
     await log_channel.send(embed=embed)
 
