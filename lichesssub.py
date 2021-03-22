@@ -103,9 +103,26 @@ async def join(ctx, arg1):
            "*" + lichessid + "** verbunden!\nDu kannst dich nun bei unserem Lichess Team " \
            "https://lichess.org/team/" + config.team + " mit dem Passwort **" + password + "** bewerben.\n" \
            "Ein Moderator schaltet dich dann für das Team frei!"
-    await ctx.author.send(text)  # TODO: Exception "Cannot send messages to this user"
     await send_embed_log(ctx, text, discord.Color.blue())
     await ctx.message.delete(delay=120)
+    await ctx.author.send(text)
+
+
+@bot.event
+async def on_command_error(ctx, error):
+    if isinstance(error, discord.ext.commands.errors.CommandInvokeError):
+        user = discord.Member.mention.fget(ctx.author)
+        text = user + ": Möglicherweise erlaubst du keine privaten Nachrichten. Wende dich für weitere Informationen" \
+                      "an einen Moderator!"
+        msg = await ctx.send(text)
+        await msg.delete(delay=120)
+        await send_embed_log(ctx, text, discord.Color.red())
+    else:
+        user = discord.Member.mention.fget(ctx.author)
+        text = user + ": Es ist ein unerwarteter Fehler aufgetreten. Wende dich bitte an einen Moderator!"
+        msg = await ctx.send(text)
+        await msg.delete(delay=120)
+        await send_embed_log(ctx, text, discord.Color.red())
 
 
 @bot.command()
@@ -184,9 +201,9 @@ async def whichname(ctx):
     if dataset:
         lichessid = dataset[0]
         text = "Deine Discord Identität ist mit dem Lichess Profil **" + str(lichessid) + "** verbunden."
-        await ctx.author.send(text)
         await send_embed_log(ctx, text, discord.Color.blue())
         await ctx.message.delete(delay=120)
+        await ctx.author.send(text)
     else:
         user = discord.Member.mention.fget(ctx.author)
         text = user + ", du bist mit diesem Discord Profil noch nicht eingetragen! Mit dem Befehl" \
@@ -262,21 +279,21 @@ async def check(ctx):
                 lost_user.append(text)
     connection.close()
     text = ""
-    trennzeichen = "\n"
+    delimiter = "\n"
     if no_list_entry:
-        no_list_entry = trennzeichen.join(no_list_entry)
+        no_list_entry = delimiter.join(no_list_entry)
         text = "__**Folgende User sind nicht in der Datenbank eingetragen:**__\n" + no_list_entry + "\n\n" + text
     if lost_user:
-        lost_user = trennzeichen.join(lost_user)
+        lost_user = delimiter.join(lost_user)
         text = "__**Folgende User konnten nicht auf dem Server gefunden werden:**__\n" + lost_user + "\n\n" + text
     if blacklist:
-        blacklist = trennzeichen.join(blacklist)
+        blacklist = delimiter.join(blacklist)
         text = "__**Folgende User sind nicht mehr als Subscriber/Patreon hinterlegt:**__\n" + blacklist + "\n\n" + text
     if faulty_list:
-        faulty_list = trennzeichen.join(faulty_list)
+        faulty_list = delimiter.join(faulty_list)
         text = "__**Folgende User wurden von lichess geflaggt:**__\n" + faulty_list + "\n\n" + text
     if changes:
-        changes = trennzeichen.join(changes)
+        changes = delimiter.join(changes)
         text = "__**Folgende Änderungen wurden vorgenommen:**__\n" + changes + "\n\n" + text
     while len(text) > 0:
         if len(text) > 5500:
