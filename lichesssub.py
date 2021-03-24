@@ -111,6 +111,7 @@ async def join(ctx, arg1):
 @bot.event
 async def on_command_error(ctx, error):
     if isinstance(error, discord.ext.commands.errors.CommandInvokeError):
+
         user = "<@" + str(ctx.author.id) + ">"
         text = user + ": Möglicherweise erlaubst du keine privaten Nachrichten. Wende dich für weitere Informationen" \
                       "an einen Moderator!"
@@ -279,18 +280,28 @@ async def check(ctx):
     if no_list_entry:
         no_list_entry = delimiter.join(no_list_entry)
         text = "__**Folgende User sind nicht in der Datenbank eingetragen:**__\n" + no_list_entry + "\n\n" + text
+    else:
+        text = "__**Alle User sind in der Datenbank eingetragen!**__\n\n" + text
     if lost_user:
         lost_user = delimiter.join(lost_user)
         text = "__**Folgende User konnten nicht auf dem Server gefunden werden:**__\n" + lost_user + "\n\n" + text
+    else:
+        text = "__**Alle User wurden auf dem Discord Server gefunden!**__\n\n" + text
     if blacklist:
         blacklist = delimiter.join(blacklist)
         text = "__**Folgende User sind nicht mehr als Subscriber/Patreon hinterlegt:**__\n" + blacklist + "\n\n" + text
+    else:
+        text = "__**Alle User sind als Subscriber oder Patreon hinterlegt!**__\n\n" + text
     if faulty_list:
         faulty_list = delimiter.join(faulty_list)
         text = "__**Folgende User wurden von lichess geflaggt:**__\n" + faulty_list + "\n\n" + text
+    else:
+        text = "__**Kein User ist von Lichess geflaggt worden!**__\n\n" + text
     if changes:
         changes = delimiter.join(changes)
         text = "__**Folgende Änderungen wurden vorgenommen:**__\n" + changes + "\n\n" + text
+    else:
+        text = "__**Es mussten keine Änderungen vorgenommen werden!**__\n\n" + text
     while len(text) > 0:
         if len(text) > 5500:
             index = 0
