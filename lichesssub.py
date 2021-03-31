@@ -19,9 +19,12 @@ async def on_ready():
 
 @bot.command()
 async def commands(ctx):
-    text = "Registriert euch für das Lichess Subscriber Team, indem ihr euer Lichess und Discord Profil verknüpft!"
+    text = "Registriert euch hier für das Lichess Subscriber Team von TBG.\n" \
+           "Verknüpft dazu das Profil von Lichess mit Discord.\n" \
+           "Nutzt dazu den Befehl !join:"
     embed = discord.Embed(title="**Commands**", color=discord.Color.gold(), description=text)
-    text = "Verknüpft das Lichess und Discord Profil mit den Rollen Subscriber und Patreon"
+    text = "Verknüpft das Profil von Lichess mit Discord.\n" \
+           "lichessname  **-->**  Dein Lichess Profil Name"
     embed.add_field(name="**!join lichessname**", value=text, inline=False)
     text = "Gibt den Lichessnamen zurück, der mit dem Discord Profil verknüpft ist."
     embed.add_field(name="**!whichname**", value=text, inline=False)
@@ -128,7 +131,7 @@ async def on_command_error(ctx, error):
 
 @bot.command()
 async def saydiscord(ctx, arg1):
-    if not await prove(ctx):
+    if not await authorization(ctx):
         return False
     lichessid = arg1.lower()
     connection = sqlite3.connect(config.database)
@@ -158,7 +161,7 @@ async def saydiscord(ctx, arg1):
 
 @bot.command()
 async def saylichess(ctx, arg1):
-    if not await prove(ctx):
+    if not await authorization(ctx):
         return False
     discord_id = arg1
     connection = sqlite3.connect(config.database)
@@ -212,7 +215,7 @@ async def whichname(ctx):
 
 @bot.command()
 async def check(ctx):
-    if not await prove(ctx):
+    if not await authorization(ctx):
         return False
     data = getdata(config.team)
     connection = sqlite3.connect(config.database)
@@ -319,7 +322,7 @@ async def check(ctx):
 
 @bot.command()
 async def delete(ctx, arg1):
-    if not await prove(ctx):
+    if not await authorization(ctx):
         return False
     lichess_user = arg1.lower()
     connection = sqlite3.connect(config.database)
@@ -342,7 +345,7 @@ async def delete(ctx, arg1):
 
 @bot.command()
 async def getlist(ctx):
-    if not await prove(ctx):
+    if not await authorization(ctx):
         return False
     msg = await ctx.send("Dieses Feature ist in der Entwicklung!")  # TODO: Fertig stellen
     await msg.delete(delay=120)
@@ -351,7 +354,7 @@ async def getlist(ctx):
 
 @bot.command()
 async def getpassword(ctx):
-    if not await prove(ctx):
+    if not await authorization(ctx):
         return False
     password = await return_password()
     text = "Das aktuelle Passwort für das Lichess Subscriber Team lautet: **" + password + "**"
@@ -371,7 +374,7 @@ async def return_password():
 
 @bot.command()
 async def changepassword(ctx, arg1):
-    if not await prove(ctx):
+    if not await authorization(ctx):
         return False
     password_old = await return_password()
     password_new = arg1
@@ -406,12 +409,12 @@ async def ping(ctx):
 
 @bot.command()
 async def clean(ctx):
-    if not await prove(ctx):
+    if not await authorization(ctx):
         return False
-    if not ctx.message.channel.id == config.channel_subs_id:
+    if ctx.message.channel.id not in config.channel_clean_available:
         msg = await ctx.send("Dieser Befehl ist hier nicht verfügbar!")
-        await msg.delete(delay=120)
-        await ctx.message.delete(delay=120)
+        await msg.delete(delay=60)
+        await ctx.message.delete(delay=60)
         return False
     counter = 0
     async for message in ctx.history(limit=200):
@@ -421,7 +424,7 @@ async def clean(ctx):
     channel_name = ctx.message.channel.mention
     text = "Es wurden " + str(counter) + " Nachrichten im Channel " + channel_name + " gelöscht!"
     msg = await ctx.send(text)
-    await msg.delete(delay=120)
+    await msg.delete(delay=60)
     await send_embed_log(ctx, text, discord.Color.blurple())
 
 
@@ -434,7 +437,7 @@ def getdata(id_team):
     return data
 
 
-async def prove(ctx):
+async def authorization(ctx):
     roles = str(ctx.author.roles)
     if config.mod not in roles:
         print("false")
