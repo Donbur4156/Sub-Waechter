@@ -349,10 +349,6 @@ async def delete(ctx, arg1):
 async def getlist(ctx):
     if not await authorization(ctx):
         return False
-    msg = await ctx.send("Dieses Feature ist in der Entwicklung!")  # TODO: Fertig stellen
-    await msg.delete(delay=120)
-    await ctx.message.delete(delay=120)
-    #  return False  # TODO: auskommentieren
     '''list_team_member = []
     team_member_gen = lichess.api.users_by_team(config.team)
     for i in team_member_gen:
@@ -418,6 +414,7 @@ async def getlist(ctx):
             gesamt = len(embed)
         print(str(embed.fields))
         await log_channel.send(embed=embed)
+    await ctx.message.delete(delay=120)
 
 
 @bot.command()
