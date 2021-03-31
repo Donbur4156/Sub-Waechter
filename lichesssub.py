@@ -5,6 +5,7 @@ import discord
 import requests
 import json
 import datetime
+import lichess.api
 
 
 token = config.token
@@ -114,18 +115,19 @@ async def join(ctx, arg1):
 @bot.event
 async def on_command_error(ctx, error):
     if isinstance(error, discord.ext.commands.errors.CommandInvokeError):
-
         user = "<@" + str(ctx.author.id) + ">"
         text = user + ": Möglicherweise erlaubst du keine privaten Nachrichten. Wende dich für weitere Informationen" \
                       "an einen Moderator!"
         msg = await ctx.send(text)
         await msg.delete(delay=120)
+        text = text + "\n**Errormessage**: " + str(error)
         await send_embed_log(ctx, text, discord.Color.red())
     else:
         user = "<@" + str(ctx.author.id) + ">"
         text = user + ": Es ist ein unerwarteter Fehler aufgetreten. Wende dich bitte an einen Moderator!"
         msg = await ctx.send(text)
         await msg.delete(delay=120)
+        text = text + "\n**Errormessage**: " + str(error)
         await send_embed_log(ctx, text, discord.Color.red())
 
 
@@ -350,6 +352,72 @@ async def getlist(ctx):
     msg = await ctx.send("Dieses Feature ist in der Entwicklung!")  # TODO: Fertig stellen
     await msg.delete(delay=120)
     await ctx.message.delete(delay=120)
+    #  return False  # TODO: auskommentieren
+    '''list_team_member = []
+    team_member_gen = lichess.api.users_by_team(config.team)
+    for i in team_member_gen:
+        list_team_member.append(i.get("id")) '''
+    list_discord = []
+    list_lichess = []
+    list_subscription = []
+    # list_team_status = []
+    connection = sqlite3.connect(config.database)
+    cursor = connection.cursor()
+    sql = "Select * FROM lichesssub"
+    data = cursor.execute(sql)
+    for i in data:
+        discord_user = "<@" + str(i[4]) + ">\n"
+        list_discord.append(discord_user)
+        list_lichess.append(i[1] + "\n")
+        sub_status = ""
+        if i[2] == 1:
+            sub_status += "Twitchsub"
+        if i[2] == 1 and i[3] == 1:
+            sub_status += "/ "
+        if i[3] == 1:
+            sub_status += "Patreon"
+        list_subscription.append(sub_status + "\n")
+        '''team_status = "nicht im Team\n"
+        if i[1] in list_team_member:
+            team_status = "im Team\n"
+        list_team_status.append(team_status)'''
+    # send log
+    log_channel = bot.get_channel(config.channel_log_id)
+    message = ctx.message.content
+    user_mention = "<@" + str(ctx.author.id) + ">"
+    print_count = 0
+    while len(list_discord) > 0:
+        print_count += 1
+        embed = discord.Embed(
+            title="*LIST #" + str(print_count) + "*", color=discord.Color.dark_blue(),
+            description=user_mention + ": " + message,
+            timestamp=datetime.datetime.utcnow())
+        u = 0
+        gesamt = len(embed)
+        while u < 3 and len(list_discord) > 0 and gesamt < 5900:
+            u += 1
+            list_discord_temp = ""
+            list_lichess_temp = ""
+            list_subscription_temp = ""
+            # list_team_status_temp = ""
+            i = 0
+            gesamt = len(embed)
+            while i < 40 and len(list_discord) > 0 and gesamt < 5900:
+                i += 1
+                list_discord_temp += list_discord.pop()
+                list_lichess_temp += list_lichess.pop()
+                list_subscription_temp += list_subscription.pop()
+                # list_team_status_temp += list_team_status.pop()
+                gesamt = len(embed) + len(list_discord_temp) + len(list_lichess_temp) + len(list_subscription_temp)
+                print(gesamt)
+            print("--------------" + str(len(list_subscription_temp)))
+            embed.add_field(name="*Discord*", value=list_discord_temp, inline=True)
+            embed.add_field(name="*Lichess*", value=list_lichess_temp, inline=True)
+            embed.add_field(name="*Subscription*", value=list_subscription_temp, inline=True)
+            # embed.add_field(name="*Teammember*", value=list_team_status_temp, inline=True)
+            gesamt = len(embed)
+        print(str(embed.fields))
+        await log_channel.send(embed=embed)
 
 
 @bot.command()
