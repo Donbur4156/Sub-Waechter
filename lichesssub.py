@@ -544,6 +544,8 @@ async def send_embed_log(ctx, text, color):
 
 
 async def post_discord_id(discord_user):
+    if discord_user == 695637248506462350:
+        return False
     user_tag = "<@" + str(discord_user) + ">"
     trash_channel = bot.get_channel(config.channel_trash)
     msg = await trash_channel.send(user_tag)
