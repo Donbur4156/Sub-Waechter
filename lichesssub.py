@@ -15,27 +15,6 @@ intents = discord.Intents.all()
 bot = commands.Bot(command_prefix='!', intents=intents)
 
 
-@bot.command()
-async def returncsv(ctx):
-    filename = 'templist.csv'
-    if os.path.isfile(filename):
-        os.remove(filename)
-    with open(filename, 'w', newline='') as file:
-        writer = csv.writer(file)
-        columns = ["eins", "zwei", "abschluss"]
-        writer.writerow(columns)
-    user_mention = "<@" + str(ctx.author.id) + ">"
-    embed = discord.Embed(
-        title="*LOG*",
-        color=discord.Color.gold(),
-        description=user_mention + ": " + ctx.message.content,
-        timestamp=datetime.datetime.utcnow()
-    )
-    log_channel = bot.get_channel(config.channel_log_id)
-    file = discord.File(filename)
-    await log_channel.send(embed=embed, file=file)
-
-
 @bot.event
 async def on_ready():
     print("I'm online!")
@@ -82,7 +61,6 @@ async def modcommands(ctx):
 async def join(ctx, arg1):
     discordtag = str(ctx.author)
     discordid = ctx.author.id
-    #  await post_discord_id(discordid)
     lichessid = str(arg1.lower())
     roles = str(ctx.author.roles)
     user = "<@" + str(ctx.author.id) + ">"
@@ -138,7 +116,6 @@ async def join(ctx, arg1):
 
 @bot.event
 async def on_command_error(ctx, error):
-    print(error)
     if isinstance(error, discord.ext.commands.errors.CommandInvokeError):
         user = "<@" + str(ctx.author.id) + ">"
         text = user + ": Möglicherweise erlaubst du keine privaten Nachrichten. Wende dich für weitere Informationen" \
