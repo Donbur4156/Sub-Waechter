@@ -59,7 +59,7 @@ async def modcommands(ctx):
 async def join(ctx, arg1):
     discordtag = str(ctx.author)
     discordid = ctx.author.id
-    await post_discord_id(discordid)
+    #  await post_discord_id(discordid)
     lichessid = str(arg1.lower())
     roles = str(ctx.author.roles)
     user = "<@" + str(ctx.author.id) + ">"
@@ -150,7 +150,7 @@ async def saydiscord(ctx, arg1):
     if current:
         user_current = "<@" + str(current[4]) + ">"
         text = "Der Lichessname **" + lichessid + "** ist mit dem Discord Profil **" + user_current + "** verbunden."
-        await post_discord_id(user_current)
+        #  await post_discord_id(user_current)
         if current[2] == 1:
             text = text + "\nDer User ist als **Twitch Subscriber** hinterlegt."
         if current[3] == 1:
@@ -182,7 +182,7 @@ async def saylichess(ctx, arg1):
     if current:
         user_current = current[1]
         text = "Der Discord User **" + discord_id + "** ist mit dem Lichess Account **" + user_current + "** verbunden."
-        await post_discord_id(user_current)
+        #  await post_discord_id(user_current)
         if current[2] == 1:
             text = text + "\nDer User ist als **Twitch Subscriber** hinterlegt."
         if current[3] == 1:
@@ -244,7 +244,7 @@ async def check(ctx):
         else:
             try:
                 dc_id = dataset[4]
-                await post_discord_id(dc_id)
+                #  await post_discord_id(dc_id)
                 server = bot.get_guild(config.serverid)
                 dc_member = server.get_member(user_id=dc_id)
                 user_current = "<@" + str(dataset[4]) + ">"
@@ -367,7 +367,7 @@ async def getlist(ctx):
     data = cursor.execute(sql)
     for i in data:
         discord_user = "<@" + str(i[4]) + ">\n"
-        await post_discord_id(i[4])
+        #  await post_discord_id(i[4])
         list_discord.append(discord_user)
         list_lichess.append(i[1] + "\n")
         sub_status = ""
