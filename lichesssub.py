@@ -5,12 +5,35 @@ import discord
 import requests
 import json
 import datetime
+import csv
+import os
 import lichess.api
 
 
 token = config.token
 intents = discord.Intents.all()
 bot = commands.Bot(command_prefix='!', intents=intents)
+
+
+@bot.command()
+async def returncsv(ctx):
+    filename = 'templist.csv'
+    if os.path.isfile(filename):
+        os.remove(filename)
+    with open(filename, 'w', newline='') as file:
+        writer = csv.writer(file)
+        columns = ["eins", "zwei", "abschluss"]
+        writer.writerow(columns)
+    user_mention = "<@" + str(ctx.author.id) + ">"
+    embed = discord.Embed(
+        title="*LOG*",
+        color=discord.Color.gold(),
+        description=user_mention + ": " + ctx.message.content,
+        timestamp=datetime.datetime.utcnow()
+    )
+    log_channel = bot.get_channel(config.channel_log_id)
+    file = discord.File(filename)
+    await log_channel.send(embed=embed, file=file)
 
 
 @bot.event
@@ -59,7 +82,7 @@ async def modcommands(ctx):
 async def join(ctx, arg1):
     discordtag = str(ctx.author)
     discordid = ctx.author.id
-    await post_discord_id(discordid)
+    #  await post_discord_id(discordid)
     lichessid = str(arg1.lower())
     roles = str(ctx.author.roles)
     user = "<@" + str(ctx.author.id) + ">"
@@ -115,6 +138,7 @@ async def join(ctx, arg1):
 
 @bot.event
 async def on_command_error(ctx, error):
+    print(error)
     if isinstance(error, discord.ext.commands.errors.CommandInvokeError):
         user = "<@" + str(ctx.author.id) + ">"
         text = user + ": Möglicherweise erlaubst du keine privaten Nachrichten. Wende dich für weitere Informationen" \
@@ -150,7 +174,7 @@ async def saydiscord(ctx, arg1):
     if current:
         user_current = "<@" + str(current[4]) + ">"
         text = "Der Lichessname **" + lichessid + "** ist mit dem Discord Profil **" + user_current + "** verbunden."
-        await post_discord_id(user_current)
+        #  await post_discord_id(user_current)
         if current[2] == 1:
             text = text + "\nDer User ist als **Twitch Subscriber** hinterlegt."
         if current[3] == 1:
@@ -182,7 +206,7 @@ async def saylichess(ctx, arg1):
     if current:
         user_current = current[1]
         text = "Der Discord User **" + discord_id + "** ist mit dem Lichess Account **" + user_current + "** verbunden."
-        await post_discord_id(user_current)
+        #  await post_discord_id(user_current)
         if current[2] == 1:
             text = text + "\nDer User ist als **Twitch Subscriber** hinterlegt."
         if current[3] == 1:
@@ -244,7 +268,7 @@ async def check(ctx):
         else:
             try:
                 dc_id = dataset[4]
-                await post_discord_id(dc_id)
+                #  await post_discord_id(dc_id)
                 server = bot.get_guild(config.serverid)
                 dc_member = server.get_member(user_id=dc_id)
                 user_current = "<@" + str(dataset[4]) + ">"
@@ -353,69 +377,55 @@ async def delete(ctx, arg1):
 async def getlist(ctx):
     if not await authorization(ctx):
         return False
-    '''list_team_member = []
+    list_team_member = []
     team_member_gen = lichess.api.users_by_team(config.team)
     for i in team_member_gen:
-        list_team_member.append(i.get("id")) '''
-    list_discord = []
+        list_team_member.append(i.get("id"))
+    list_discord_tag = []
+    list_discord_id = []
     list_lichess = []
-    list_subscription = []
-    # list_team_status = []
+    list_twitch_status = []
+    list_patreon_status = []
+    list_team_status = []
     connection = sqlite3.connect(config.database)
     cursor = connection.cursor()
     sql = "Select * FROM lichesssub"
     data = cursor.execute(sql)
     for i in data:
-        discord_user = "<@" + str(i[4]) + ">\n"
-        await post_discord_id(i[4])
-        list_discord.append(discord_user)
-        list_lichess.append(i[1] + "\n")
-        sub_status = ""
+        list_discord_id.append(i[4])
+        list_discord_tag.append(i[0])
+        list_lichess.append(i[1])
+        twitch = False
         if i[2] == 1:
-            sub_status += "Twitchsub"
-        if i[2] == 1 and i[3] == 1:
-            sub_status += "/ "
+            twitch = True
+        list_twitch_status.append(twitch)
+        patreon = False
         if i[3] == 1:
-            sub_status += "Patreon"
-        list_subscription.append(sub_status + "\n")
-        '''team_status = "nicht im Team\n"
+            patreon = True
+        list_patreon_status.append(patreon)
+        team_status = False
         if i[1] in list_team_member:
-            team_status = "im Team\n"
-        list_team_status.append(team_status)'''
-    # send log
+            team_status = True
+        list_team_status.append(team_status)
+    filename = 'subscriber_list.csv'
+    if os.path.isfile(filename):
+        os.remove(filename)
+    columns = ["Discordtag", "DiscordID", "LichessID", "Twitch", "Patreon", "Teamstatus"]
+    with open(filename, 'w', newline='') as file:
+        writer = csv.writer(file)
+        writer.writerow(columns)
+        for x in range(0, len(list_discord_id)):
+            discord_tag = list_discord_tag[x]
+            discord_id = list_discord_id[x]
+            lichess_id = list_lichess[x]
+            twitch = list_twitch_status[x]
+            patreon = list_patreon_status[x]
+            team_member = list_team_status[x]
+            writer.writerow([discord_tag, discord_id, lichess_id, twitch, patreon, team_member])
+    await send_embed_log(ctx, "Export CSV to Discord", discord.Color.dark_blue())
+    file_export = discord.File(filename)
     log_channel = bot.get_channel(config.channel_log_id)
-    message = ctx.message.content
-    user_mention = "<@" + str(ctx.author.id) + ">"
-    print_count = 0
-    while len(list_discord) > 0:
-        print_count += 1
-        embed = discord.Embed(
-            title="*LIST #" + str(print_count) + "*", color=discord.Color.dark_blue(),
-            description=user_mention + ": " + message,
-            timestamp=datetime.datetime.utcnow())
-        u = 0
-        gesamt = len(embed)
-        while u < 3 and len(list_discord) > 0 and gesamt < 5900:
-            u += 1
-            list_discord_temp = ""
-            list_lichess_temp = ""
-            list_subscription_temp = ""
-            # list_team_status_temp = ""
-            i = 0
-            gesamt = len(embed)
-            while i < 40 and len(list_discord) > 0 and gesamt < 5900:
-                i += 1
-                list_discord_temp += list_discord.pop()
-                list_lichess_temp += list_lichess.pop()
-                list_subscription_temp += list_subscription.pop()
-                # list_team_status_temp += list_team_status.pop()
-                gesamt = len(embed) + len(list_discord_temp) + len(list_lichess_temp) + len(list_subscription_temp)
-            embed.add_field(name="*Discord*", value=list_discord_temp, inline=True)
-            embed.add_field(name="*Lichess*", value=list_lichess_temp, inline=True)
-            embed.add_field(name="*Subscription*", value=list_subscription_temp, inline=True)
-            # embed.add_field(name="*Teammember*", value=list_team_status_temp, inline=True)
-        await log_channel.send(embed=embed)
-    await ctx.message.delete(delay=120)
+    await log_channel.send(file=file_export)
 
 
 @bot.command()
