@@ -151,7 +151,6 @@ async def saydiscord(ctx, arg1):
     if current:
         user_current = "<@" + str(current[4]) + ">"
         text = "Der Lichessname **" + lichessid + "** ist mit dem Discord Profil **" + user_current + "** verbunden."
-        #  await post_discord_id(user_current)
         if current[2] == 1:
             text = text + "\nDer User ist als **Twitch Subscriber** hinterlegt."
         if current[3] == 1:
@@ -183,7 +182,6 @@ async def saylichess(ctx, arg1):
     if current:
         user_current = current[1]
         text = "Der Discord User **" + discord_id + "** ist mit dem Lichess Account **" + user_current + "** verbunden."
-        #  await post_discord_id(user_current)
         if current[2] == 1:
             text = text + "\nDer User ist als **Twitch Subscriber** hinterlegt."
         if current[3] == 1:
@@ -245,7 +243,6 @@ async def check(ctx):
         else:
             try:
                 dc_id = dataset[4]
-                #  await post_discord_id(dc_id)
                 server = bot.get_guild(config.serverid)
                 dc_member = server.get_member(user_id=dc_id)
                 user_current = "<@" + str(dataset[4]) + ">"
@@ -528,15 +525,6 @@ async def send_embed_log(ctx, text, color):
             embed.add_field(name="\u200b", value=text_print, inline=False)
         text = text[index:]
     await log_channel.send(embed=embed)
-
-
-async def post_discord_id(discord_user):
-    if discord_user == 695637248506462350:
-        return False
-    user_tag = "<@" + str(discord_user) + ">"
-    trash_channel = bot.get_channel(config.channel_trash)
-    msg = await trash_channel.send(user_tag)
-    await msg.delete(delay=1)
 
 
 bot.run(token)
