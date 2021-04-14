@@ -8,6 +8,7 @@ import datetime
 import csv
 import os
 import lichess.api
+import operator
 
 
 token = config.token
@@ -525,6 +526,83 @@ async def send_embed_log(ctx, text, color):
             embed.add_field(name="\u200b", value=text_print, inline=False)
         text = text[index:]
     await log_channel.send(embed=embed)
+
+
+@bot.command()
+async def swiss(ctx, *args):
+    if not await authorization(ctx):
+        return False
+    result = []
+    dict_score = {}
+    dict_tie = {}
+    userlist = []
+    error_list = []
+    for arg in args:
+        unique_swiss = await get_swiss(arg)
+        if unique_swiss:
+            for row in unique_swiss:
+                if row[0] in userlist:
+                    dict_score[row[0]] += row[1]
+                    dict_tie[row[0]] += row[2]
+                else:
+                    item = {row[0]: row[1]}
+                    dict_score.update(item)
+                    item = {row[0]: row[2]}
+                    dict_tie.update(item)
+                    userlist.append(row[0])
+        else:
+            error_list.append(arg)
+    for i in range(len(userlist)):
+        username = userlist[i]
+        result_line = [i, username, dict_score[username], dict_tie[username]]
+        result.append(result_line)
+    result_sorted = sorted(result, key=operator.itemgetter(2, 3), reverse=True)
+    for i in range(len(result_sorted)):
+        result_sorted[i][0] = i + 1
+    print(error_list)
+    filename = 'swiss.csv'
+    if os.path.isfile(filename):
+        os.remove(filename)
+    columns = ["Rank", "Username", "Score", "TieBreak"]
+    with open(filename, 'w', newline='') as file:
+        writer = csv.writer(file, delimiter=";")
+        writer.writerow(columns)
+        for x in range(len(result_sorted)):
+            rank = result_sorted[x][0]
+            username = result_sorted[x][1]
+            score = str(result_sorted[x][2]).replace('.', ',')
+            tiebreak = str(result_sorted[x][3]).replace('.', ',')
+            writer.writerow([rank, username, score, tiebreak])
+    text = "Export CSV to Discord"
+    if error_list:
+        text += "\nFolgende IDs konnten nicht geladen werden:"
+        for i in error_list:
+            text += "\n" + i
+    await send_embed_log(ctx, text, discord.Color.dark_blue())
+    file_export = discord.File(filename)
+    log_channel = bot.get_channel(config.channel_log_id)
+    await log_channel.send(file=file_export)
+    if os.path.isfile(filename):
+        os.remove(filename)
+
+
+async def get_swiss(swiss_id):
+    url = "https://lichess.org/api/swiss/" + swiss_id + "/results"
+    param = dict()
+    resp = requests.get(url=url, params=param)
+    list_resp = resp.text.splitlines()
+    data = list(map(lambda x: json.loads(x), list_resp))
+    unique_result = []
+    for i in data:
+        column = []
+        username = i.get("username")
+        column.append(username)
+        points = i.get("score")//1000000/10
+        column.append(points)
+        tie_break = i.get("tieBreak")
+        column.append(tie_break)
+        unique_result.append(column)
+    return unique_result
 
 
 bot.run(token)
