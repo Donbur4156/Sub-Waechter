@@ -446,7 +446,8 @@ async def changepassword(ctx, arg1):
 
 @bot.command()
 async def ping(ctx):
-    await ctx.send("pong")
+    await ctx.send("pong new")
+    pass
     user = str(ctx.author)
     embed = discord.Embed(
         title="Ping Pong",
