@@ -447,7 +447,6 @@ async def changepassword(ctx, arg1):
 @bot.command()
 async def ping(ctx):
     await ctx.send("pong")
-    pass
     user = ctx.author
     embed = discord.Embed(
         title="Ping Pong",
@@ -455,7 +454,6 @@ async def ping(ctx):
         color=discord.Color.green()
     )
     await ctx.send(embed=embed)
-    await ctx.message.delete(delay=60)
 
 
 @bot.command()
