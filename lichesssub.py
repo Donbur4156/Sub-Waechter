@@ -9,6 +9,7 @@ import csv
 import os
 import lichess.api
 import operator
+import functions.function as f
 
 
 token = config.token
@@ -82,22 +83,26 @@ async def join(ctx, arg1):
     cursor = connection.cursor()
     sql = "SELECT * FROM lichesssub WHERE discordtag=?"
     cursor.execute(sql, (discordtag,))
-    data = cursor.fetchone()
-    if data:
+    data_discord = cursor.fetchone()
+    if data_discord:  # Discord Profil eingetragen
+        lichess_id = data_discord[1]
         text = user + ", dein Discord Profil ist bereits eingetragen! Wende dich an einen Moderator, " \
-                      "wenn du das hinterlegte Lichess Profil ändern möchtest."
-        msg = await ctx.send(text)
-        await msg.delete(delay=120)
+                      "wenn du das hinterlegte Lichess Profil (**" + lichess_id + "**) ändern möchtest."
+        await ctx.author.send(text)
         await send_embed_log(ctx, text, discord.Color.orange())
         await ctx.message.delete(delay=120)
+        if f.user_in_team(config.team, lichessid):
+            await f.send_info_inteam(ctx.author)
+        else:
+            await f.send_info_join(ctx.author)
         return False
     sql = "SELECT * FROM lichesssub WHERE lichessid=?"
     cursor.execute(sql, (lichessid,))
-    data = cursor.fetchone()
-    if data:
-        text = user + ", dieses Lichess Profil ist bereits eingetragen!"
-        msg = await ctx.send(text)
-        await msg.delete(delay=120)
+    data_lichess = cursor.fetchone()
+    if data_lichess:  # Lichess eingetragen aber nicht dieser Discord User
+        text = user + ", du versuchst ein Lichess Profil einzutragen, welches bereits eingetragen ist!" \
+                      "Wende dich an einen Moderator, wenn du das hinterlegte Discord Profil ändern möchtest."
+        await ctx.author.send(text)
         await send_embed_log(ctx, text, discord.Color.orange())
         await ctx.message.delete(delay=120)
         return False
@@ -105,19 +110,18 @@ async def join(ctx, arg1):
                    (discordtag, lichessid, twitch, patreon, discordid))
     connection.commit()
     connection.close()
-    password = await return_password()
     text = "Deine Discord Identität wurde erfolgreich mit dem Lichessnamen *" \
-           "*" + lichessid + "** verbunden!\nDu kannst dich nun bei unserem Lichess Team " \
-           "https://lichess.org/team/" + config.team + " mit dem Passwort **" + password + "** bewerben.\n" \
-           "Ein Moderator schaltet dich dann für das Team frei!"
+           "*" + lichessid + "** verbunden!"
     await send_embed_log(ctx, text, discord.Color.blue())
     await ctx.message.delete(delay=120)
     await ctx.author.send(text)
+    await f.send_info_join(ctx.author)
 
 
 @bot.event
 async def on_command_error(ctx, error):
     if isinstance(error, discord.ext.commands.errors.CommandInvokeError):
+        print(error.original)
         user = "<@" + str(ctx.author.id) + ">"
         text = user + ": Möglicherweise erlaubst du keine privaten Nachrichten. Wende dich für weitere Informationen" \
                       "an einen Moderator!"
@@ -222,7 +226,7 @@ async def whichname(ctx):
 async def check(ctx):
     if not await authorization(ctx):
         return False
-    data = getdata(config.team)
+    data = f.get_teamdata(config.team)
     connection = sqlite3.connect(config.database)
     cursor = connection.cursor()
     blacklist = []
@@ -232,8 +236,7 @@ async def check(ctx):
     lost_user = []
     for i in data:
         lichess_id = i.get("id")
-        faulty = i.get("tosViolation")
-        if faulty:
+        if i.get("tosViolation"):
             text = "Der User **" + lichess_id + "** hat gegen die Lichess Nutzungsbedinungen verstossen!"
             faulty_list.append(text)
         sql = "SELECT * FROM lichesssub WHERE lichessid=?"
@@ -407,27 +410,17 @@ async def getlist(ctx):
 async def getpassword(ctx):
     if not await authorization(ctx):
         return False
-    password = await return_password()
+    password = await f.return_password()
     text = "Das aktuelle Passwort für das Lichess Subscriber Team lautet: **" + password + "**"
     await send_embed_log(ctx, text, discord.Color.blue())
     await ctx.message.delete(delay=120)
-
-
-async def return_password():
-    connection = sqlite3.connect(config.database)
-    cursor = connection.cursor()
-    sql = "SELECT password FROM config WHERE serverid=?"
-    password = cursor.execute(sql, (config.serverid,))
-    password = password.fetchone()[0]
-    connection.close()
-    return password
 
 
 @bot.command()
 async def changepassword(ctx, arg1):
     if not await authorization(ctx):
         return False
-    password_old = await return_password()
+    password_old = await f.return_password()
     password_new = arg1
     if password_old != password_new:
         connection = sqlite3.connect(config.database)
@@ -442,19 +435,6 @@ async def changepassword(ctx, arg1):
         text = "Das neue Passwort entspricht dem alten Passwort und wurde nicht geändert!"
         await send_embed_log(ctx, text, discord.Color.orange())
     await ctx.message.delete(delay=120)
-
-
-@bot.command()
-async def ping(ctx):
-    await ctx.send("pong new")
-    pass
-    user = str(ctx.author)
-    embed = discord.Embed(
-        title="Ping Pong",
-        description="Ping Pong ist toll \n" + user,
-        color=discord.Color.green()
-    )
-    await ctx.send(embed=embed)
 
 
 @bot.command()
@@ -476,15 +456,6 @@ async def clean(ctx):
     msg = await ctx.send(text)
     await msg.delete(delay=60)
     await send_embed_log(ctx, text, discord.Color.blurple())
-
-
-def getdata(id_team):
-    url = "https://lichess.org/api/team/" + id_team + "/users"
-    param = dict()
-    resp = requests.get(url=url, params=param)
-    list_resp = resp.text.splitlines()
-    data = list(map(lambda x: json.loads(x), list_resp))
-    return data
 
 
 async def authorization(ctx):
