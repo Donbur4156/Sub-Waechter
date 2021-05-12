@@ -567,7 +567,7 @@ async def get_swiss(swiss_id):
         column = []
         username = i.get("username")
         column.append(username)
-        points = i.get("score")//1000000/10
+        points = i.get("points")
         column.append(points)
         tie_break = i.get("tieBreak")
         column.append(tie_break)
