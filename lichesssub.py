@@ -53,12 +53,12 @@ async def modcommands(ctx):
     embed.add_field(name="**!getpassword**", value=text, inline=False)
     text = "Ändert das aktuelle Passwort in das neu angegebene."
     embed.add_field(name="**!changepassword neuesPasswort**", value=text, inline=False)
-    text = "Räumt den Kanal tbg-vs-subs auf. Nur dort ausführbar!"
+    text = "Räumt den Kanal auf. Nur in folgenden Kanälen verfügbar:\n#tbg-vs-sub\n#lichess-sub-team\n#control"
     embed.add_field(name="**!clean**", value=text, inline=False)
     text = "Gibt das Ergebnis mehrerer Swiss Turniere als CSV zurück.\n" \
-           "ALs Argumente die IDs der Turniere anfügen."
-    embed.add_field(name="**!swiss args**", value=text, inline=False)
-    text = "Fügt einen Bot-Account als Platzhalter in die Datenbank ein"
+           "Als Argumente die IDs der Turniere anfügen."
+    embed.add_field(name="**!swiss ID1 ID2 ID3 ...**", value=text, inline=False)
+    text = "Fügt einen Bot-Account als Platzhalter in die Datenbank ein."
     embed.add_field(name="**!joinbot lichessname**", value=text, inline=False)
     await ctx.send(embed=embed)
 
