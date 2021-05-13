@@ -25,13 +25,12 @@ async def on_ready():
 @bot.command()
 async def commands(ctx):
     text = "Registriert euch hier für das Lichess Subscriber Team von TBG.\n" \
-           "Verknüpft dazu das Profil von Lichess mit Discord.\n" \
+           "Verknüpft dazu euer Lichess Profil mit eurem Discord Profil.\n" \
            "Nutzt dazu den Befehl !join:"
     embed = discord.Embed(title="**Commands**", color=discord.Color.gold(), description=text)
-    text = "Verknüpft das Profil von Lichess mit Discord.\n" \
-           "lichessname  **-->**  Dein Lichess Profil Name"
-    embed.add_field(name="**!join lichessname**", value=text, inline=False)
-    text = "Gibt den Lichessnamen zurück, der mit dem Discord Profil verknüpft ist."
+    text = "Verknüpft das Profil von Lichess mit deinem Discord Profil."
+    embed.add_field(name="**!join {dein lichessname}**", value=text, inline=False)
+    text = "Gibt den Lichessnamen zurück, der mit deinem Discord Profil verknüpft ist."
     embed.add_field(name="**!whichname**", value=text, inline=False)
     await ctx.send(embed=embed)
 
@@ -56,6 +55,11 @@ async def modcommands(ctx):
     embed.add_field(name="**!changepassword neuesPasswort**", value=text, inline=False)
     text = "Räumt den Kanal tbg-vs-subs auf. Nur dort ausführbar!"
     embed.add_field(name="**!clean**", value=text, inline=False)
+    text = "Gibt das Ergebnis mehrerer Swiss Turniere als CSV zurück.\n" \
+           "ALs Argumente die IDs der Turniere anfügen."
+    embed.add_field(name="**!swiss args**", value=text, inline=False)
+    text = "Fügt einen Bot-Account als Platzhalter in die Datenbank ein"
+    embed.add_field(name="**!joinbot lichessname**", value=text, inline=False)
     await ctx.send(embed=embed)
 
 
@@ -118,6 +122,37 @@ async def join(ctx, arg1):
     await f.send_info_join(ctx.author)
 
 
+@bot.command()
+async def joinbot(ctx, arg1):
+    if not await authorization(ctx):
+        return False
+    discordtag = "Bot"
+    discordid = 1234
+    lichessid = str(arg1.lower())
+    user = "<@" + str(ctx.author.id) + ">"
+    twitch = 1
+    patreon = 1
+    connection = sqlite3.connect(config.database)
+    cursor = connection.cursor()
+    sql = "SELECT * FROM lichesssub WHERE lichessid=?"
+    cursor.execute(sql, (lichessid,))
+    data_lichess = cursor.fetchone()
+    if data_lichess:  # Lichess eingetragen aber nicht dieser Discord User
+        text = user + ", du versuchst ein Lichess Profil einzutragen, welches bereits eingetragen ist!"
+        await ctx.author.send(text)
+        await send_embed_log(ctx, text, discord.Color.orange())
+        await ctx.message.delete(delay=120)
+        return False
+    cursor.execute("INSERT INTO lichesssub (discordtag, lichessid, twitch, patreon, discordid) VALUES (?, ?, ?, ?, ?)",
+                   (discordtag, lichessid, twitch, patreon, discordid))
+    connection.commit()
+    connection.close()
+    text = "Dem Platzhalter für Bots wurde der Lichessname **" + lichessid + "** hinzugefügt!"
+    await send_embed_log(ctx, text, discord.Color.blue())
+    await ctx.message.delete(delay=120)
+    await ctx.author.send(text)
+
+
 @bot.event
 async def on_command_error(ctx, error):
     if isinstance(error, discord.ext.commands.errors.CommandInvokeError):
@@ -154,12 +189,16 @@ async def saydiscord(ctx, arg1):
             break
     connection.close()
     if current:
-        user_current = "<@" + str(current[4]) + ">"
-        text = "Der Lichessname **" + lichessid + "** ist mit dem Discord Profil **" + user_current + "** verbunden."
-        if current[2] == 1:
-            text = text + "\nDer User ist als **Twitch Subscriber** hinterlegt."
-        if current[3] == 1:
-            text = text + "\nDer User ist als **Patreon** hinterlegt."
+        if current[0] == "Bot":
+            text = "Der lichessname **" + lichessid + "** ist als Bot Account hinterlegt."
+        else:
+            user_current = "<@" + str(current[4]) + ">"
+            text = "Der Lichessname **" + lichessid + "** ist mit dem Discord Profil **" \
+                   + user_current + "** verbunden."
+            if current[2] == 1:
+                text = text + "\nDer User ist als **Twitch Subscriber** hinterlegt."
+            if current[3] == 1:
+                text = text + "\nDer User ist als **Patreon** hinterlegt."
         await send_embed_log(ctx, text, discord.Color.blue())
         await ctx.message.delete(delay=120)
     else:
@@ -244,7 +283,7 @@ async def check(ctx):
         dataset = cursor.fetchone()
         if not dataset:
             no_list_entry.append("Lichess: **" + lichess_id + "** (nicht in Datenbank eingetragen!)")
-        else:
+        elif dataset[0] != "Bot":
             try:
                 dc_id = dataset[4]
                 server = bot.get_guild(config.serverid)

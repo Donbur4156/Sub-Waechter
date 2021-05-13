@@ -61,3 +61,18 @@ async def return_password():
     password = password.fetchone()[0]
     connection.close()
     return password
+
+
+def sql_all(sql, parameter):
+    connection = sqlite3.connect(config.database)
+    cursor = connection.cursor()
+    cursor.execute(sql, parameter)
+    return cursor.fetchall()
+
+
+def sql_one():
+    pass
+
+
+def sql_multi():
+    pass
