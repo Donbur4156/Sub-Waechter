@@ -93,12 +93,13 @@ async def join(ctx, arg1):
         text = user + ", dein Discord Profil ist bereits eingetragen! Wende dich an einen Moderator, " \
                       "wenn du das hinterlegte Lichess Profil (**" + lichess_id + "**) ändern möchtest."
         await ctx.author.send(text)
-        await send_embed_log(ctx, text, discord.Color.orange())
         await ctx.message.delete(delay=120)
         if f.user_in_team(config.team, lichessid):
-            await f.send_info_inteam(ctx.author)
+            in_team = await f.send_info_inteam(ctx.author)
         else:
-            await f.send_info_join(ctx.author)
+            in_team = await f.send_info_join(ctx.author)
+        log_text = text + "\n\n" + in_team
+        await send_embed_log(ctx, log_text, discord.Color.orange())
         return False
     sql = "SELECT * FROM lichesssub WHERE lichessid=?"
     cursor.execute(sql, (lichessid,))
@@ -205,6 +206,12 @@ async def saydiscord(ctx, arg1):
         text = "Der Lichessname " + lichessid + " ist bisher mit keinem Discord Profil verbunden!"
         await send_embed_log(ctx, text, discord.Color.blue())
         await ctx.message.delete(delay=120)
+
+
+async def check_user():
+    # auf Rolle prüfen
+    # auf Lichess prüfen
+    pass
 
 
 @bot.command()

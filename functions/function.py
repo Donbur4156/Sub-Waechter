@@ -43,6 +43,7 @@ def user_in_team(team_id, username):
 async def send_info_inteam(author):
     text = "Du bist bereits Mitglied des Lichess Subscriber Team von TBG."
     await author.send(text)
+    return text
 
 
 async def send_info_join(author):
@@ -51,6 +52,7 @@ async def send_info_join(author):
            "https://lichess.org/team/" + config.team + " mit dem Passwort **" + password + "** bewerben.\n" \
            "Ein Moderator schaltet dich dann für das Team frei!"
     await author.send(text)
+    return text
 
 
 async def return_password():
