@@ -78,3 +78,22 @@ def sql_one():
 
 def sql_multi():
     pass
+
+
+def get_swiss(swiss_id):
+    url = "https://lichess.org/api/swiss/" + swiss_id + "/results"
+    param = dict()
+    resp = requests.get(url=url, params=param)
+    list_resp = resp.text.splitlines()
+    data = list(map(lambda x: json.loads(x), list_resp))
+    unique_result = []
+    for i in data:
+        column = []
+        username = i.get("username")
+        column.append(username)
+        points = i.get("points")
+        column.append(points)
+        tie_break = i.get("tieBreak")
+        column.append(tie_break)
+        unique_result.append(column)
+    return unique_result

@@ -2,8 +2,6 @@ import config
 import sqlite3
 from discord.ext import commands
 import discord
-import requests
-import json
 import datetime
 import csv
 import os
@@ -117,10 +115,11 @@ async def join(ctx, arg1):
     connection.close()
     text = "Deine Discord Identität wurde erfolgreich mit dem Lichessnamen *" \
            "*" + lichessid + "** verbunden!"
-    await send_embed_log(ctx, text, discord.Color.blue())
     await ctx.message.delete(delay=120)
     await ctx.author.send(text)
-    await f.send_info_join(ctx.author)
+    team_info = await f.send_info_join(ctx.author)
+    log_text = text + "\n\n" + team_info
+    await send_embed_log(ctx, log_text, discord.Color.blue())
 
 
 @bot.command()
@@ -450,6 +449,7 @@ async def getlist(ctx):
     file_export = discord.File(filename)
     log_channel = bot.get_channel(config.channel_log_id)
     await log_channel.send(file=file_export)
+    await ctx.message.delete(delay=120)
 
 
 @bot.command()
@@ -554,7 +554,7 @@ async def swiss(ctx, *args):
     userlist = []
     error_list = []
     for arg in args:
-        unique_swiss = await get_swiss(arg)
+        unique_swiss = f.get_swiss(arg)
         if unique_swiss:
             for row in unique_swiss:
                 if row[0] in userlist:
@@ -600,25 +600,7 @@ async def swiss(ctx, *args):
     await log_channel.send(file=file_export)
     if os.path.isfile(filename):
         os.remove(filename)
-
-
-async def get_swiss(swiss_id):
-    url = "https://lichess.org/api/swiss/" + swiss_id + "/results"
-    param = dict()
-    resp = requests.get(url=url, params=param)
-    list_resp = resp.text.splitlines()
-    data = list(map(lambda x: json.loads(x), list_resp))
-    unique_result = []
-    for i in data:
-        column = []
-        username = i.get("username")
-        column.append(username)
-        points = i.get("points")
-        column.append(points)
-        tie_break = i.get("tieBreak")
-        column.append(tie_break)
-        unique_result.append(column)
-    return unique_result
+    await ctx.message.delete(delay=120)
 
 
 bot.run(token)
