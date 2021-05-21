@@ -94,10 +94,12 @@ async def join(ctx, arg1):
         await ctx.message.delete(delay=120)
         if f.user_in_team(config.team, lichessid):
             in_team = await f.send_info_inteam(ctx.author)
+            log_text = text + "\n\n" + in_team
+            await send_embed_log(ctx, log_text, discord.Color.green())
         else:
             in_team = await f.send_info_join(ctx.author)
-        log_text = text + "\n\n" + in_team
-        await send_embed_log(ctx, log_text, discord.Color.orange())
+            log_text = text + "\n\n" + in_team
+            await send_embed_log(ctx, log_text, discord.Color.orange())
         return False
     sql = "SELECT * FROM lichesssub WHERE lichessid=?"
     cursor.execute(sql, (lichessid,))
