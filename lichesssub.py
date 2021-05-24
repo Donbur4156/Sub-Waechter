@@ -1,6 +1,7 @@
 import config
 import sqlite3
 from discord.ext import commands
+from discord.ext.commands import MemberConverter, RoleConverter
 import discord
 import datetime
 import csv
@@ -124,6 +125,17 @@ async def join(ctx, arg1):
     await send_embed_log(ctx, log_text, discord.Color.blue())
 
 
+@join.error
+async def join_handler(ctx, error):
+    if isinstance(error, discord.ext.commands.MissingRequiredArgument):
+        text = await get_mention(ctx, ctx.author.id) + \
+               "Der Befehl !join benötigt zusätzlich deinen Lichessnamen!\n" \
+               "!join lichessname"
+        msg = await ctx.send(text)
+        await msg.delete(delay=18000)
+        await ctx.message.delete(delay=18000)
+
+
 @bot.command()
 async def joinbot(ctx, arg1):
     if not await authorization(ctx):
@@ -155,24 +167,15 @@ async def joinbot(ctx, arg1):
     await ctx.author.send(text)
 
 
-@bot.event
-async def on_command_error(ctx, error):
-    if isinstance(error, discord.ext.commands.errors.CommandInvokeError):
-        print(error.original)
-        user = "<@" + str(ctx.author.id) + ">"
-        text = user + ": Möglicherweise erlaubst du keine privaten Nachrichten. Wende dich für weitere Informationen" \
-                      "an einen Moderator!"
+@joinbot.error
+async def joinbot_handler(ctx, error):
+    if isinstance(error, discord.ext.commands.MissingRequiredArgument):
+        text = await get_mention(ctx, ctx.author.id) + \
+               "Der Befehl !joinbot benötigt zusätzlich den Lichessnamen des Bots!\n" \
+               "!joinbot lichessname"
         msg = await ctx.send(text)
-        await msg.delete(delay=120)
-        text = text + "\n**Errormessage**: " + str(error)
-        await send_embed_log(ctx, text, discord.Color.red())
-    else:
-        user = "<@" + str(ctx.author.id) + ">"
-        text = user + ": Es ist ein unerwarteter Fehler aufgetreten. Wende dich bitte an einen Moderator!"
-        msg = await ctx.send(text)
-        await msg.delete(delay=120)
-        text = text + "\n**Errormessage**: " + str(error)
-        await send_embed_log(ctx, text, discord.Color.red())
+        await msg.delete(delay=18000)
+        await ctx.message.delete(delay=18000)
 
 
 @bot.command()
@@ -209,12 +212,6 @@ async def saydiscord(ctx, arg1):
         await ctx.message.delete(delay=120)
 
 
-async def check_user():
-    # auf Rolle prüfen
-    # auf Lichess prüfen
-    pass
-
-
 @bot.command()
 async def saylichess(ctx, arg1):
     if not await authorization(ctx):
@@ -230,7 +227,8 @@ async def saylichess(ctx, arg1):
             current = data
             break
     connection.close()
-    discord_id = "<@" + str(discord_id) + ">"
+    discord_id = await get_mention(ctx, discord_id)
+    #    discord_id = "<@" + str(discord_id) + ">"
     if current:
         user_current = current[1]
         text = "Der Discord User **" + discord_id + "** ist mit dem Lichess Account **" + user_current + "** verbunden."
@@ -243,6 +241,12 @@ async def saylichess(ctx, arg1):
         text = "Der Discord User " + discord_id + " ist bisher mit keinem Lichess Acccount verbunden!"
         await send_embed_log(ctx, text, discord.Color.blue())
     await ctx.message.delete(delay=120)
+
+
+async def check_user():
+    # auf Rolle prüfen
+    # auf Lichess prüfen
+    pass
 
 
 @bot.command()
@@ -261,7 +265,7 @@ async def whichname(ctx):
         await ctx.message.delete(delay=120)
         await ctx.author.send(text)
     else:
-        user_mention = "<@" + str(ctx.author.id) + ">"
+        user_mention = await get_mention(ctx, ctx.author.id)
         text = user_mention + ", du bist mit diesem Discord Profil noch nicht eingetragen! Mit dem Befehl" \
                               " `!join lichessname` kannst du dich als Subscriber oder Patreon eintragen."
         msg = await ctx.send(text)
@@ -376,29 +380,6 @@ async def check(ctx):
 
 
 @bot.command()
-async def delete(ctx, arg1):
-    if not await authorization(ctx):
-        return False
-    lichess_user = arg1.lower()
-    connection = sqlite3.connect(config.database)
-    cursor = connection.cursor()
-    sql = "SELECT * FROM lichesssub WHERE lichessid=?"
-    cursor.execute(sql, (lichess_user,))
-    data = cursor.fetchone()
-    if data:
-        sql = "DELETE FROM lichesssub WHERE lichessid=?"
-        cursor.execute(sql, (lichess_user,))
-        connection.commit()
-        current = "<@" + str(data[4]) + ">"
-        text = "Der Discord User " + current + " wurde aus der Datenbank entfernt!"
-    else:
-        text = "Dieses Lichess Profil ist mit keiner Discord Identität verknüpft!"
-    await send_embed_log(ctx, text, discord.Color.blue())
-    connection.close()
-    await ctx.message.delete(delay=120)
-
-
-@bot.command()
 async def getlist(ctx):
     if not await authorization(ctx):
         return False
@@ -455,6 +436,29 @@ async def getlist(ctx):
 
 
 @bot.command()
+async def delete(ctx, arg1):
+    if not await authorization(ctx):
+        return False
+    lichess_user = arg1.lower()
+    connection = sqlite3.connect(config.database)
+    cursor = connection.cursor()
+    sql = "SELECT * FROM lichesssub WHERE lichessid=?"
+    cursor.execute(sql, (lichess_user,))
+    data = cursor.fetchone()
+    if data:
+        sql = "DELETE FROM lichesssub WHERE lichessid=?"
+        cursor.execute(sql, (lichess_user,))
+        connection.commit()
+        current = "<@" + str(data[4]) + ">"
+        text = "Der Discord User " + current + " wurde aus der Datenbank entfernt!"
+    else:
+        text = "Dieses Lichess Profil ist mit keiner Discord Identität verknüpft!"
+    await send_embed_log(ctx, text, discord.Color.blue())
+    connection.close()
+    await ctx.message.delete(delay=120)
+
+
+@bot.command()
 async def getpassword(ctx):
     if not await authorization(ctx):
         return False
@@ -483,67 +487,6 @@ async def changepassword(ctx, arg1):
         text = "Das neue Passwort entspricht dem alten Passwort und wurde nicht geändert!"
         await send_embed_log(ctx, text, discord.Color.orange())
     await ctx.message.delete(delay=120)
-
-
-@bot.command()
-async def clean(ctx):
-    if not await authorization(ctx):
-        return False
-    if ctx.message.channel.id not in config.channel_clean_available:
-        msg = await ctx.send("Dieser Befehl ist hier nicht verfügbar!")
-        await msg.delete(delay=60)
-        await ctx.message.delete(delay=60)
-        return False
-    counter = 0
-    async for message in ctx.history(limit=200):
-        if not message.pinned:
-            await message.delete()
-            counter += 1
-    channel_name = ctx.message.channel.mention
-    text = "Es wurden " + str(counter) + " Nachrichten im Channel " + channel_name + " gelöscht!"
-    msg = await ctx.send(text)
-    await msg.delete(delay=60)
-    await send_embed_log(ctx, text, discord.Color.blurple())
-
-
-async def authorization(ctx):
-    roles = str(ctx.author.roles)
-    if config.mod not in roles:
-        print("false")
-        user = "<@" + str(ctx.author.id) + ">"
-        text = user + ", du hast nicht die benötigten Rechte um dies zu tun!"
-        msg = await ctx.send(text)
-        await msg.delete(delay=120)
-        await send_embed_log(ctx, text, discord.Color.red())
-        await ctx.message.delete(delay=120)
-        return False
-    return True
-
-
-async def send_embed_log(ctx, text, color):
-    log_channel = bot.get_channel(config.channel_log_id)
-    message = ctx.message.content
-    user_mention = "<@" + str(ctx.author.id) + ">"
-    embed = discord.Embed(
-        title="*LOG*", color=color, description=user_mention + ": " + message, timestamp=datetime.datetime.utcnow())
-    print_count = 1
-    while len(text) > 0:
-        if len(text) > 1000:
-            index = 0
-            while index < 800:
-                index = text.find("\n", index) + 2
-            index -= 1
-            text_print = text[:index]
-        else:
-            index = len(text)
-            text_print = text
-        if print_count == 1:
-            embed.add_field(name="*RESULT*", value=text_print, inline=False)
-            print_count -= 1
-        else:
-            embed.add_field(name="\u200b", value=text_print, inline=False)
-        text = text[index:]
-    await log_channel.send(embed=embed)
 
 
 @bot.command()
@@ -603,6 +546,129 @@ async def swiss(ctx, *args):
     if os.path.isfile(filename):
         os.remove(filename)
     await ctx.message.delete(delay=120)
+
+
+@bot.command()
+async def clean(ctx):
+    if not await authorization(ctx):
+        return False
+    if ctx.message.channel.id not in config.channel_clean_available:
+        msg = await ctx.send("Dieser Befehl ist hier nicht verfügbar!")
+        await msg.delete(delay=60)
+        await ctx.message.delete(delay=60)
+        return False
+    counter = 0
+    messages = ""
+    async for message in ctx.history(limit=10):
+        if not message.pinned:
+            message_time = message.created_at.strftime("%Y-%m-%d %H:%M:%S")
+            messages = "\n" + str(await get_mention(ctx, message.author.id)) + " (" + str(message_time) + "):\n" \
+                       + str(message.content) + messages
+            await message.delete()
+            counter += 1
+    channel_name = ctx.message.channel.mention
+    text = "Es wurden " + str(counter) + " Nachrichten im Channel " + channel_name + " gelöscht!"
+    msg = await ctx.send(text)
+    await msg.delete(delay=60)
+    text += "\n**Gelöschte Nachrichten:**" + messages
+    await send_embed_log(ctx, text, discord.Color.blurple())
+
+
+async def authorization(ctx):
+    roles = str(ctx.author.roles)
+    if config.mod not in roles:
+        user = "<@" + str(ctx.author.id) + ">"
+        text = user + ", du hast nicht die benötigten Rechte um dies zu tun!"
+        msg = await ctx.send(text)
+        await msg.delete(delay=120)
+        await send_embed_log(ctx, text, discord.Color.red())
+        await ctx.message.delete(delay=120)
+        return False
+    return True
+
+
+async def ping_unique_mods(ctx):
+    log_channel = bot.get_channel(config.channel_log_id)
+    for mod in config.log_mods_to_ping:
+        member = await get_mention(ctx, mod)
+        mention = await log_channel.send(member)
+        await mention.delete()
+    for role in config.log_mod_role_to_ping:
+        role = await get_role_mention(ctx, role)
+        mention = await log_channel.send(role)
+        await mention.delete()
+
+
+async def get_mention(ctx, member):
+    converter = MemberConverter()
+    member = await converter.convert(ctx, str(member))
+    return member.mention
+
+
+async def get_role_mention(ctx, role):
+    converter = RoleConverter()
+    role_mention = await converter.convert(ctx, str(role))
+    return role_mention.mention
+
+
+# Creates a logger and works with it.
+def print_log(text):
+    now = datetime.datetime.now()
+    now = now.strftime("%Y-%m-%d %H:%M:%S")
+    print(str(now) + ": " + str(text))
+
+
+async def send_embed_log(ctx, text, color):
+    log_channel = bot.get_channel(config.channel_log_id)
+    message = ctx.message.content
+    user_mention = "<@" + str(ctx.author.id) + ">"
+    embed = discord.Embed(
+        title="*LOG*", color=color, description=user_mention + ": " + message, timestamp=datetime.datetime.utcnow())
+    print_count = 1
+    while len(text) > 0:
+        if len(text) > 1000:
+            index = 0
+            while index < 800:
+                index = text.find("\n", index) + 2
+            index -= 1
+            text_print = text[:index]
+        else:
+            index = len(text)
+            text_print = text
+        if print_count == 1:
+            embed.add_field(name="*RESULT*", value=text_print, inline=False)
+            print_count -= 1
+        else:
+            embed.add_field(name="\u200b", value=text_print, inline=False)
+        text = text[index:]
+    await log_channel.send(embed=embed)
+
+
+@bot.event
+async def on_command_error(ctx, error):
+    if isinstance(error, discord.ext.commands.MissingRequiredArgument):
+        user = "<@" + str(ctx.author.id) + ">"
+        text = "Der User " + user + " hat dem Befehl zu wenig Argumente übergeben!\n**Errormessage**: " + str(error)
+        await send_embed_log(ctx, text, discord.Color.red())
+        print_log(text)
+    elif isinstance(error, discord.ext.commands.CommandInvokeError):
+        user = "<@" + str(ctx.author.id) + ">"
+        text = user + ": Möglicherweise erlaubst du keine privaten Nachrichten. Wende dich für weitere Informationen" \
+                      "an einen Moderator!"
+        msg = await ctx.send(text)
+        await msg.delete(delay=120)
+        text = text + "\n**Errormessage**: " + str(error)
+        await send_embed_log(ctx, text, discord.Color.red())
+        print_log(text)
+    else:
+        user = "<@" + str(ctx.author.id) + ">"
+        text = user + ": Es ist ein unerwarteter Fehler aufgetreten. Wende dich bitte an einen Moderator!"
+        msg = await ctx.send(text)
+        await msg.delete(delay=120)
+        text = text + "\n**Errormessage**: " + str(error)
+        await send_embed_log(ctx, text, discord.Color.red())
+        print_log(text)
+    await ping_unique_mods(ctx)
 
 
 bot.run(token)
