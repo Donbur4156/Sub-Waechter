@@ -300,8 +300,9 @@ async def check(ctx):
                 dc_id = dataset[4]
                 server = bot.get_guild(config.serverid)
                 dc_member = server.get_member(user_id=dc_id)
-                user_current = "<@" + str(dataset[4]) + ">"
                 roles = str(dc_member.roles)
+                user_current = await get_mention(ctx, dataset[4])
+                #  user_current = "<@" + str(dataset[4]) + ">"
                 if config.role1 in roles or config.role2 in roles:
                     if config.role1 in roles and dataset[2] == 0:
                         sql = "UPDATE lichesssub SET twitch = 1 WHERE discordtag=?"
