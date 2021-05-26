@@ -16,6 +16,12 @@ intents = discord.Intents.all()
 bot = commands.Bot(command_prefix='!', intents=intents)
 
 
+@bot.command()
+async def test(ctx):
+    user = await bot.fetch_user(702978861410812025)
+    await user.send("HI")
+
+
 @bot.event
 async def on_ready():
     print("I'm online!")
@@ -243,10 +249,13 @@ async def saylichess(ctx, arg1):
     await ctx.message.delete(delay=120)
 
 
-async def check_user():
-    # auf Rolle prüfen
+async def check_user(discord_id=False, lichess_id=False):
+    if discord_id:
+        print(str(discord_id))
+    if lichess_id:
+        print(str(lichess_id))
     # auf Lichess prüfen
-    pass
+
 
 
 @bot.command()
@@ -652,7 +661,8 @@ async def on_command_error(ctx, error):
         text = "Der User " + user + " hat dem Befehl zu wenig Argumente übergeben!\n**Errormessage**: " + str(error)
         await send_embed_log(ctx, text, discord.Color.red())
         print_log(text)
-    elif isinstance(error, discord.ext.commands.CommandInvokeError):
+    elif isinstance(error, discord.ext.commands.CommandInvokeError) and \
+            error.original.text == "Cannot send messages to this user":
         user = "<@" + str(ctx.author.id) + ">"
         text = user + ": Möglicherweise erlaubst du keine privaten Nachrichten. Wende dich für weitere Informationen" \
                       "an einen Moderator!"
