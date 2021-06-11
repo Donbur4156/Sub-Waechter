@@ -569,7 +569,7 @@ async def clean(ctx):
         return False
     counter = 0
     messages = ""
-    async for message in ctx.history(limit=10):
+    async for message in ctx.history(limit=50):
         if not message.pinned:
             message_time = message.created_at.strftime("%Y-%m-%d %H:%M:%S")
             messages = "\n" + str(await get_mention(ctx, message.author.id)) + " (" + str(message_time) + "):\n" \
