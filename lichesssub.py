@@ -58,7 +58,8 @@ async def modcommands(ctx):
     embed.add_field(name="**!getpassword**", value=text, inline=False)
     text = "Ändert das aktuelle Passwort in das neu angegebene."
     embed.add_field(name="**!changepassword neuesPasswort**", value=text, inline=False)
-    text = "Räumt den Kanal auf. Nur in folgenden Kanälen verfügbar:\n#tbg-vs-sub\n#lichess-sub-team\n#control"
+    text = "Räumt den Kanal auf. Nur in folgenden Kanälen verfügbar:" \
+           "\n#tbg-vs-sub\n#lichess-sub-team\n#control"
     embed.add_field(name="**!clean**", value=text, inline=False)
     text = "Gibt das Ergebnis mehrerer Swiss Turniere als CSV zurück.\n" \
            "Als Argumente die IDs der Turniere anfügen."
@@ -82,7 +83,8 @@ async def join(ctx, arg1):
     if config.role2 in roles:
         patreon = 1
     if twitch == 0 and patreon == 0:
-        text = user + ", du scheinst weder Subscriber oder Patreon zu sein. Melde dich bitte bei einem Moderator!"
+        text = f"{user}, du scheinst weder Subscriber oder Patreon zu sein. " \
+               f"Melde dich bitte bei einem Moderator!"
         msg = await ctx.send(text)
         await msg.delete(delay=120)
         await send_embed_log(ctx, text, discord.Color.red())
@@ -95,8 +97,9 @@ async def join(ctx, arg1):
     data_discord = cursor.fetchone()
     if data_discord:  # Discord Profil eingetragen
         lichess_id = data_discord[1]
-        text = user + ", dein Discord Profil ist bereits eingetragen! Wende dich an einen Moderator, " \
-                      "wenn du das hinterlegte Lichess Profil (**" + lichess_id + "**) ändern möchtest."
+        text = f"{user}, dein Discord Profil ist bereits eingetragen! " \
+               f"Wende dich an einen Moderator, wenn du das hinterlegte Lichess Profil " \
+               f"(**{lichess_id}**) ändern möchtest."
         await ctx.author.send(text)
         await ctx.message.delete(delay=120)
         if f.user_in_team(config.team, lichessid):
@@ -112,18 +115,20 @@ async def join(ctx, arg1):
     cursor.execute(sql, (lichessid,))
     data_lichess = cursor.fetchone()
     if data_lichess:  # Lichess eingetragen aber nicht dieser Discord User
-        text = user + ", du versuchst ein Lichess Profil einzutragen, welches bereits eingetragen ist!" \
-                      "Wende dich an einen Moderator, wenn du das hinterlegte Discord Profil ändern möchtest."
+        text = f"{user}, du versuchst ein Lichess Profil einzutragen, welches bereits " \
+               f"eingetragen ist! Wende dich an einen Moderator, " \
+               f"wenn du das hinterlegte Discord Profil ändern möchtest."
         await ctx.author.send(text)
         await send_embed_log(ctx, text, discord.Color.orange())
         await ctx.message.delete(delay=120)
         return False
-    cursor.execute("INSERT INTO lichesssub (discordtag, lichessid, twitch, patreon, discordid) VALUES (?, ?, ?, ?, ?)",
+    cursor.execute("INSERT INTO lichesssub (discordtag, lichessid, twitch, patreon, discordid) "
+                   "VALUES (?, ?, ?, ?, ?)",
                    (discordtag, lichessid, twitch, patreon, discordid))
     connection.commit()
     connection.close()
-    text = "Deine Discord Identität wurde erfolgreich mit dem Lichessnamen *" \
-           "*" + lichessid + "** verbunden!"
+    text = f"Deine Discord Identität wurde erfolgreich " \
+           f"mit dem Lichessnamen **{lichessid}** verbunden!"
     await ctx.message.delete(delay=120)
     await ctx.author.send(text)
     team_info = await f.send_info_join(ctx.author)
@@ -135,8 +140,7 @@ async def join(ctx, arg1):
 async def join_handler(ctx, error):
     if isinstance(error, discord.ext.commands.MissingRequiredArgument):
         text = await get_mention(ctx, ctx.author.id) + \
-               "Der Befehl !join benötigt zusätzlich deinen Lichessnamen!\n" \
-               "!join lichessname"
+               "Der Befehl !join benötigt zusätzlich deinen Lichessnamen!\n!join lichessname"
         msg = await ctx.send(text)
         await msg.delete(delay=18000)
         await ctx.message.delete(delay=18000)
@@ -158,12 +162,14 @@ async def joinbot(ctx, arg1):
     cursor.execute(sql, (lichessid,))
     data_lichess = cursor.fetchone()
     if data_lichess:  # Lichess eingetragen aber nicht dieser Discord User
-        text = user + ", du versuchst ein Lichess Profil einzutragen, welches bereits eingetragen ist!"
+        text = f"{user}, du versuchst ein Lichess Profil einzutragen, " \
+               f"welches bereits eingetragen ist!"
         await ctx.author.send(text)
         await send_embed_log(ctx, text, discord.Color.orange())
         await ctx.message.delete(delay=120)
         return False
-    cursor.execute("INSERT INTO lichesssub (discordtag, lichessid, twitch, patreon, discordid) VALUES (?, ?, ?, ?, ?)",
+    cursor.execute("INSERT INTO lichesssub (discordtag, lichessid, twitch, patreon, discordid) "
+                   "VALUES (?, ?, ?, ?, ?)",
                    (discordtag, lichessid, twitch, patreon, discordid))
     connection.commit()
     connection.close()
@@ -201,19 +207,19 @@ async def saydiscord(ctx, arg1):
     connection.close()
     if current:
         if current[0] == "Bot":
-            text = "Der lichessname **" + lichessid + "** ist als Bot Account hinterlegt."
+            text = f"Der lichessname **{lichessid}** ist als Bot Account hinterlegt."
         else:
             user_current = "<@" + str(current[4]) + ">"
-            text = "Der Lichessname **" + lichessid + "** ist mit dem Discord Profil **" \
-                   + user_current + "** verbunden."
+            text = f"Der Lichessname **{lichessid}** ist mit dem " \
+                   f"Discord Profil **{user_current}** verbunden."
             if current[2] == 1:
-                text = text + "\nDer User ist als **Twitch Subscriber** hinterlegt."
+                text = f"{text}\nDer User ist als **Twitch Subscriber** hinterlegt."
             if current[3] == 1:
-                text = text + "\nDer User ist als **Patreon** hinterlegt."
+                text = f"{text}\nDer User ist als **Patreon** hinterlegt."
         await send_embed_log(ctx, text, discord.Color.blue())
         await ctx.message.delete(delay=120)
     else:
-        text = "Der Lichessname " + lichessid + " ist bisher mit keinem Discord Profil verbunden!"
+        text = f"Der Lichessname {lichessid} ist bisher mit keinem Discord Profil verbunden!"
         await send_embed_log(ctx, text, discord.Color.blue())
         await ctx.message.delete(delay=120)
 
@@ -234,17 +240,17 @@ async def saylichess(ctx, arg1):
             break
     connection.close()
     discord_id = await get_mention(ctx, discord_id)
-    #    discord_id = "<@" + str(discord_id) + ">"
     if current:
         user_current = current[1]
-        text = "Der Discord User **" + discord_id + "** ist mit dem Lichess Account **" + user_current + "** verbunden."
+        text = f"Der Discord User **{discord_id}** ist " \
+               f"mit dem Lichess Account **{user_current}** verbunden."
         if current[2] == 1:
-            text = text + "\nDer User ist als **Twitch Subscriber** hinterlegt."
+            text = f"{text}\nDer User ist als **Twitch Subscriber** hinterlegt."
         if current[3] == 1:
-            text = text + "\nDer User ist als **Patreon** hinterlegt."
+            text = f"{text}\nDer User ist als **Patreon** hinterlegt."
         await send_embed_log(ctx, text, discord.Color.blue())
     else:
-        text = "Der Discord User " + discord_id + " ist bisher mit keinem Lichess Acccount verbunden!"
+        text = f"Der Discord User {discord_id} ist bisher mit keinem Lichess Acccount verbunden!"
         await send_embed_log(ctx, text, discord.Color.blue())
     await ctx.message.delete(delay=120)
 
@@ -257,7 +263,6 @@ async def check_user(discord_id=False, lichess_id=False):
     # auf Lichess prüfen
 
 
-
 @bot.command()
 async def whichname(ctx):
     user = str(ctx.author)
@@ -268,18 +273,19 @@ async def whichname(ctx):
     dataset = cursor.fetchone()
     connection.close()
     if dataset:
-        lichessid = dataset[0]
-        text = "Deine Discord Identität ist mit dem Lichess Profil **" + str(lichessid) + "** verbunden."
+        lichessid = str(dataset[0])
+        text = f"Deine Discord Identität ist mit dem Lichess Profil **{lichessid}** verbunden."
         await send_embed_log(ctx, text, discord.Color.blue())
-        await ctx.message.delete(delay=120)
         await ctx.author.send(text)
     else:
         user_mention = await get_mention(ctx, ctx.author.id)
-        text = user_mention + ", du bist mit diesem Discord Profil noch nicht eingetragen! Mit dem Befehl" \
-                              " `!join lichessname` kannst du dich als Subscriber oder Patreon eintragen."
+        text = f"{user_mention}, du bist mit diesem Discord Profil noch nicht eingetragen! " \
+               f"Mit dem Befehl `!join lichessname` kannst du dich als Subscriber oder Patreon " \
+               f"eintragen."
         msg = await ctx.send(text)
-        await msg.delete(delay=120)
         await send_embed_log(ctx, text, discord.Color.orange())
+        await msg.delete(delay=120)
+    await ctx.message.delete(delay=120)
 
 
 @bot.command()
@@ -303,7 +309,7 @@ async def check(ctx):
         cursor.execute(sql, (lichess_id,))
         dataset = cursor.fetchone()
         if not dataset:
-            no_list_entry.append("Lichess: **" + lichess_id + "** (nicht in Datenbank eingetragen!)")
+            no_list_entry.append(f"Lichess: **{lichessid}** (nicht in Datenbank eingetragen!)")
         elif dataset[0] != "Bot":
             try:
                 dc_id = dataset[4]
@@ -317,75 +323,67 @@ async def check(ctx):
                         sql = "UPDATE lichesssub SET twitch = 1 WHERE discordtag=?"
                         cursor.execute(sql, (dataset[0],))
                         connection.commit()
-                        text = "Dem User **" + user_current + "** wurde der Twitch Sub hinzugefügt!"
+                        text = f"Dem User **{user_current}** wurde der Twitch Sub hinzugefügt!"
                         changes.append(text)
                     if config.role1 not in roles and dataset[2] == 1:
                         sql = "UPDATE lichesssub SET twitch = 0 WHERE discordtag=?"
                         cursor.execute(sql, (dataset[0],))
                         connection.commit()
-                        text = "Dem User **" + user_current + "** wurde der Twitch Sub entfernt!"
+                        text = f"Dem User **{user_current}** wurde der Twitch Sub entfernt!"
                         changes.append(text)
                     if config.role2 in roles and dataset[3] == 0:
                         sql = "UPDATE lichesssub SET patreon = 1 WHERE discordtag=?"
                         cursor.execute(sql, (dataset[0],))
                         connection.commit()
-                        text = "Dem User **" + user_current + "** wurde der Patreon Status hinzugefügt!"
+                        text = f"Dem User **{user_current}** wurde der Patreon Status hinzugefügt!"
                         changes.append(text)
                     if config.role2 not in roles and dataset[3] == 1:
                         sql = "UPDATE lichesssub SET patreon = 0 WHERE discordtag=?"
                         cursor.execute(sql, (dataset[0],))
                         connection.commit()
-                        text = "Dem User **" + user_current + "** wurde der Patreon Status entfernt!"
+                        text = f"Dem User **{user_current}** wurde der Patreon Status entfernt!"
                         changes.append(text)
                 else:
                     sql = "UPDATE lichesssub SET patreon = 0, twitch = 0 WHERE discordtag=?"
                     cursor.execute(sql, (dataset[0],))
                     connection.commit()
-                    blacklist.append(user_current + ": **" + dataset[1] + "**")
+                    blacklist.append(f"{user_current}: **{dataset[1]}**")
             except AttributeError:
-                text = "Der User mit dem Discord tag **" + dataset[0] + "** und dem Lichess Profil" \
-                       " **" + dataset[1] + "** konnte auf diesem Server nicht gefunden werden!"
+                text = f"Der User mit dem Discord tag **{dataset[0]}** und dem Lichess Profil" \
+                       f" **{dataset[1]}** konnte auf diesem Server nicht gefunden werden!"
                 lost_user.append(text)
     connection.close()
     text = ""
     delimiter = "\n"
     if no_list_entry:
         no_list_entry = delimiter.join(no_list_entry)
-        text = "__**Folgende User sind nicht in der Datenbank eingetragen:**__\n" + no_list_entry + "\n\n" + text
+        text = f"__**Folgende User sind nicht in der Datenbank eingetragen:**__" \
+               f"\n{no_list_entry}\n\n{text}"
     else:
-        text = "__**Alle User sind in der Datenbank eingetragen!**__\n\n" + text
+        text = f"__**Alle User sind in der Datenbank eingetragen!**__\n\n{text}"
     if lost_user:
         lost_user = delimiter.join(lost_user)
-        text = "__**Folgende User konnten nicht auf dem Server gefunden werden:**__\n" + lost_user + "\n\n" + text
+        text = f"__**Folgende User konnten nicht auf dem Server gefunden werden:**__" \
+               f"\n{lost_user}\n\n{text}"
     else:
-        text = "__**Alle User wurden auf dem Discord Server gefunden!**__\n\n" + text
+        text = f"__**Alle User wurden auf dem Discord Server gefunden!**__\n\n{text}"
     if blacklist:
         blacklist = delimiter.join(blacklist)
-        text = "__**Folgende User sind nicht mehr als Subscriber/Patreon hinterlegt:**__\n" + blacklist + "\n\n" + text
+        text = f"__**Folgende User sind nicht mehr als Subscriber/Patreon hinterlegt:**__" \
+               f"\n{blacklist}\n\n{text}"
     else:
-        text = "__**Alle User sind als Subscriber oder Patreon hinterlegt!**__\n\n" + text
+        text = f"__**Alle User sind als Subscriber oder Patreon hinterlegt!**__\n\n{text}"
     if faulty_list:
         faulty_list = delimiter.join(faulty_list)
-        text = "__**Folgende User wurden von lichess geflaggt:**__\n" + faulty_list + "\n\n" + text
+        text = f"__**Folgende User wurden von lichess geflaggt:**__\n{faulty_list}\n\n{text}"
     else:
-        text = "__**Kein User ist von Lichess geflaggt worden!**__\n\n" + text
+        text = f"__**Kein User ist von Lichess geflaggt worden!**__\n\n{text}"
     if changes:
         changes = delimiter.join(changes)
-        text = "__**Folgende Änderungen wurden vorgenommen:**__\n" + changes + "\n\n" + text
+        text = f"__**Folgende Änderungen wurden vorgenommen:**__\n{changes}\n\n{text}"
     else:
-        text = "__**Es mussten keine Änderungen vorgenommen werden!**__\n\n" + text
-    while len(text) > 0:
-        if len(text) > 5500:
-            index = 0
-            while index < 5200:
-                index = text.find("\n", index) + 2
-            index -= 1
-            text_print = text[:index]
-        else:
-            index = len(text)
-            text_print = text
-        await send_embed_log(ctx, text_print, discord.Color.purple())
-        text = text[index:]
+        text = f"__**Es mussten keine Änderungen vorgenommen werden!**__\n\n{text}"
+    await send_embed_log(ctx, text, discord.Color.purple())
     await ctx.message.delete(delay=120)
 
 
@@ -460,7 +458,7 @@ async def delete(ctx, arg1):
         cursor.execute(sql, (lichess_user,))
         connection.commit()
         current = "<@" + str(data[4]) + ">"
-        text = "Der Discord User " + current + " wurde aus der Datenbank entfernt!"
+        text = f"Der Discord User {current} wurde aus der Datenbank entfernt!"
     else:
         text = "Dieses Lichess Profil ist mit keiner Discord Identität verknüpft!"
     await send_embed_log(ctx, text, discord.Color.blue())
@@ -473,7 +471,7 @@ async def getpassword(ctx):
     if not await authorization(ctx):
         return False
     password = await f.return_password()
-    text = "Das aktuelle Passwort für das Lichess Subscriber Team lautet: **" + password + "**"
+    text = f"Das aktuelle Passwort für das Lichess Subscriber Team lautet: **{password}**"
     await send_embed_log(ctx, text, discord.Color.blue())
     await ctx.message.delete(delay=120)
 
@@ -491,7 +489,8 @@ async def changepassword(ctx, arg1):
         cursor.execute(sql, (password_new, config.serverid,))
         connection.commit()
         connection.close()
-        text = "Das Passwort für das Lichess Subscriber Team wurde erfolgreich zu **" + password_new + "** geändert!"
+        text = f"Das Passwort für das Lichess Subscriber Team " \
+               f"wurde erfolgreich zu **{password_new}** geändert!"
         await send_embed_log(ctx, text, discord.Color.green())
     else:
         text = "Das neue Passwort entspricht dem alten Passwort und wurde nicht geändert!"
@@ -572,8 +571,8 @@ async def clean(ctx):
     async for message in ctx.history(limit=50):
         if not message.pinned:
             message_time = message.created_at.strftime("%Y-%m-%d %H:%M:%S")
-            messages = "\n" + str(await get_mention(ctx, message.author.id)) + " (" + str(message_time) + "):\n" \
-                       + str(message.content) + messages
+            messages = f"\n{str(await get_mention(ctx, message.author.id))} ({str(message_time)})" \
+                       f":\n{str(message.content)}\n{messages}"
             await message.delete()
             counter += 1
     channel_name = ctx.message.channel.mention
@@ -632,51 +631,65 @@ async def send_embed_log(ctx, text, color):
     log_channel = bot.get_channel(config.channel_log_id)
     message = ctx.message.content
     user_mention = "<@" + str(ctx.author.id) + ">"
-    embed = discord.Embed(
-        title="*LOG*", color=color, description=user_mention + ": " + message, timestamp=datetime.datetime.utcnow())
-    print_count = 1
     while len(text) > 0:
-        if len(text) > 1000:
+        if len(text) > 5500:
             index = 0
-            while index < 800:
+            while index < 5200:
                 index = text.find("\n", index) + 2
             index -= 1
-            text_print = text[:index]
+            text_embed = text[:index]
         else:
             index = len(text)
-            text_print = text
-        if print_count == 1:
-            embed.add_field(name="*RESULT*", value=text_print, inline=False)
-            print_count -= 1
-        else:
-            embed.add_field(name="\u200b", value=text_print, inline=False)
+            text_embed = text
         text = text[index:]
-    await log_channel.send(embed=embed)
+        embed = discord.Embed(
+            title="*LOG*", color=color, description=f"{user_mention}: {message}",
+            timestamp=datetime.datetime.utcnow())
+        start = True
+        while len(text_embed) > 0:
+            if len(text_embed) > 1000:
+                index = 0
+                while index < 800:
+                    index = text_embed.find("\n", index) + 2
+                index -= 1
+                text_field = text_embed[:index]
+            else:
+                index = len(text_embed)
+                text_field = text_embed
+            text_embed = text_embed[index:]
+            if start:
+                embed.add_field(name="*RESULT*", value=text_field, inline=False)
+                start = False
+            else:
+                embed.add_field(name="\u200b", value=text_field, inline=False)
+        await log_channel.send(embed=embed)
 
 
 @bot.event
 async def on_command_error(ctx, error):
     if isinstance(error, discord.ext.commands.MissingRequiredArgument):
         user = "<@" + str(ctx.author.id) + ">"
-        text = "Der User " + user + " hat dem Befehl zu wenig Argumente übergeben!\n**Errormessage**: " + str(error)
+        text = f"Der User {user} hat dem Befehl zu wenig Argumente übergeben!" \
+               f"\n**Errormessage**: {str(error)}"
         await send_embed_log(ctx, text, discord.Color.red())
         print_log(text)
     elif isinstance(error, discord.ext.commands.CommandInvokeError) and \
             error.original.text == "Cannot send messages to this user":
         user = "<@" + str(ctx.author.id) + ">"
-        text = user + ": Möglicherweise erlaubst du keine privaten Nachrichten. Wende dich für weitere Informationen" \
-                      "an einen Moderator!"
+        text = f"{user}, möglicherweise erlaubst du keine privaten Nachrichten. " \
+               f"Wende dich für weitere Informationen an einen Moderator!"
         msg = await ctx.send(text)
         await msg.delete(delay=120)
-        text = text + "\n**Errormessage**: " + str(error)
+        text = f"{text}\n**Errormessage**: {str(error)}"
         await send_embed_log(ctx, text, discord.Color.red())
         print_log(text)
     else:
         user = "<@" + str(ctx.author.id) + ">"
-        text = user + ": Es ist ein unerwarteter Fehler aufgetreten. Wende dich bitte an einen Moderator!"
+        text = f"{user}, es ist ein unerwarteter Fehler aufgetreten. " \
+               f"Wende dich bitte an einen Moderator!"
         msg = await ctx.send(text)
         await msg.delete(delay=120)
-        text = text + "\n**Errormessage**: " + str(error)
+        text = f"{text}\n**Errormessage**: {str(error)}"
         await send_embed_log(ctx, text, discord.Color.red())
         print_log(text)
     await ping_unique_mods(ctx)
