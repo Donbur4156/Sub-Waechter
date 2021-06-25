@@ -296,6 +296,7 @@ async def check(ctx):
     connection = sqlite3.connect(config.database)
     cursor = connection.cursor()
     blacklist = []
+    blacklist_print = ""
     no_list_entry = []
     faulty_list = []
     changes = []
@@ -303,13 +304,13 @@ async def check(ctx):
     for i in data:
         lichess_id = i.get("id")
         if i.get("tosViolation"):
-            text = "Der User **" + lichess_id + "** hat gegen die Lichess Nutzungsbedinungen verstossen!"
+            text = f"Der User **{lichess_id}** hat gegen die Lichess Nutzungsbedinungen verstossen!"
             faulty_list.append(text)
         sql = "SELECT * FROM lichesssub WHERE lichessid=?"
         cursor.execute(sql, (lichess_id,))
         dataset = cursor.fetchone()
         if not dataset:
-            no_list_entry.append(f"Lichess: **{lichessid}** (nicht in Datenbank eingetragen!)")
+            no_list_entry.append(f"Lichess: **{lichess_id}** (nicht in Datenbank eingetragen!)")
         elif dataset[0] != "Bot":
             try:
                 dc_id = dataset[4]
@@ -348,6 +349,7 @@ async def check(ctx):
                     cursor.execute(sql, (dataset[0],))
                     connection.commit()
                     blacklist.append(f"{user_current}: **{dataset[1]}**")
+                    blacklist_print += f"{str(dataset[1])}\n"
             except AttributeError:
                 text = f"Der User mit dem Discord tag **{dataset[0]}** und dem Lichess Profil" \
                        f" **{dataset[1]}** konnte auf diesem Server nicht gefunden werden!"
@@ -384,6 +386,7 @@ async def check(ctx):
     else:
         text = f"__**Es mussten keine Änderungen vorgenommen werden!**__\n\n{text}"
     await send_embed_log(ctx, text, discord.Color.purple())
+    await send_embed_log(ctx, blacklist_print, discord.Color.purple())
     await ctx.message.delete(delay=120)
 
 
@@ -667,6 +670,7 @@ async def send_embed_log(ctx, text, color):
 
 @bot.event
 async def on_command_error(ctx, error):
+    print_log(error)
     if isinstance(error, discord.ext.commands.MissingRequiredArgument):
         user = "<@" + str(ctx.author.id) + ">"
         text = f"Der User {user} hat dem Befehl zu wenig Argumente übergeben!" \
