@@ -69,7 +69,7 @@ async def modcommands(ctx):
     await ctx.send(embed=embed)
 
 
-@bot.command()
+@bot.command(aliases=['Join'])
 async def join(ctx, arg1):
     discordtag = str(ctx.author)
     discordid = ctx.author.id
@@ -263,7 +263,7 @@ async def check_user(discord_id=False, lichess_id=False):
     # auf Lichess prüfen
 
 
-@bot.command()
+@bot.command(aliases=['Whichname'])
 async def whichname(ctx):
     user = str(ctx.author)
     connection = sqlite3.connect(config.database)
