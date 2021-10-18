@@ -45,6 +45,10 @@ async def commands(ctx):
 async def modcommands(ctx):
     text = "Folgende Commands stehen den Moderatoren zur Verfügung:"
     embed = discord.Embed(title="**Mod Commands**", color=0x0D5EAF, description=text)
+    text = "Zeigt alle verfügbaren Commands an."
+    embed.add_field(name="**!commands**", value=text, inline=False)
+    text = "Zeigt alle Commands für Moderatoren an."
+    embed.add_field(name="**!modcommands**", value=text, inline=False)
     text = "Gibt das Lichess Profil zurück, das mit dem Discord Profil verknüpft ist."
     embed.add_field(name="**!saylichess discordUserID**", value=text, inline=False)
     text = "Gibt das Discord Profil zurück, das mit dem Lichess Profil verknüpft ist."
@@ -55,12 +59,15 @@ async def modcommands(ctx):
     embed.add_field(name="**!check**", value=text, inline=False)
     text = "Gibt eine CSV Datei zurück mit allen eingetragenen Usern."
     embed.add_field(name="**!getlist**", value=text, inline=False)
-    text = "Gibt das aktuelle Passwort wieder."
+    text = "Gibt das aktuelle Passwort, welches im Bot gespeichert ist, wieder."
     embed.add_field(name="**!getpassword**", value=text, inline=False)
-    text = "Ändert das aktuelle Passwort in das neu angegebene."
+    text = "Ändert das aktuelle Passwort, welches im Bot gespeichert ist, in das neu angegebene."
     embed.add_field(name="**!changepassword neuesPasswort**", value=text, inline=False)
+    channel1 = bot.get_channel(820982762341007380)
+    channel2 = bot.get_channel(776934646151512065)
+    channel3 = bot.get_channel(820980777700294667)
     text = "Räumt den Kanal auf. Nur in folgenden Kanälen verfügbar:" \
-           "\n#tbg-vs-sub\n#lichess-sub-team\n#control"
+           f"\n{channel1}\n{channel2}\n{channel3}"
     embed.add_field(name="**!clean**", value=text, inline=False)
     text = "Gibt das Ergebnis mehrerer Swiss Turniere als CSV zurück.\n" \
            "Als Argumente die IDs der Turniere anfügen."
