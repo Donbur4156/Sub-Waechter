@@ -30,10 +30,11 @@ async def on_ready():
 @bot.command()
 async def commands(ctx):
     text = "Registriert euch hier für das Lichess Subscriber Team von TBG.\n" \
-           "Verknüpft dazu euer Lichess Profil mit eurem Discord Profil.\n" \
-           "Nutzt dazu den Befehl !join:"
+           "Verknüpft dazu euer Lichess Profil mit eurem Discord Profil\n" \
+           "mit dem Befehl !join:"
     embed = discord.Embed(title="**Commands**", color=0x0D5EAF, description=text)
-    text = "Verknüpft das Profil von Lichess mit deinem Discord Profil."
+    text = "Verknüpft das Profil von Lichess mit deinem Discord Profil.\n" \
+           "Der Lichessname ohne die geschweiften Klammern!"
     embed.add_field(name="**!join {dein lichessname}**", value=text, inline=False)
     text = "Gibt den Lichessnamen zurück, der mit deinem Discord Profil verknüpft ist."
     embed.add_field(name="**!whichname**", value=text, inline=False)
