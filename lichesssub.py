@@ -32,7 +32,7 @@ async def commands(ctx):
     text = "Registriert euch hier für das Lichess Subscriber Team von TBG.\n" \
            "Verknüpft dazu euer Lichess Profil mit eurem Discord Profil.\n" \
            "Nutzt dazu den Befehl !join:"
-    embed = discord.Embed(title="**Commands**", color=discord.Color.gold(), description=text)
+    embed = discord.Embed(title="**Commands**", color=discord.Color.blue(), description=text)
     text = "Verknüpft das Profil von Lichess mit deinem Discord Profil."
     embed.add_field(name="**!join {dein lichessname}**", value=text, inline=False)
     text = "Gibt den Lichessnamen zurück, der mit deinem Discord Profil verknüpft ist."
@@ -43,7 +43,7 @@ async def commands(ctx):
 @bot.command()
 async def modcommands(ctx):
     text = "Folgende Commands stehen den Moderatoren zur Verfügung:"
-    embed = discord.Embed(title="**Mod Commands**", color=discord.Color.gold(), description=text)
+    embed = discord.Embed(title="**Mod Commands**", color=discord.Color.blue(), description=text)
     text = "Gibt das Lichess Profil zurück, das mit dem Discord Profil verknüpft ist."
     embed.add_field(name="**!saylichess discordUserID**", value=text, inline=False)
     text = "Gibt das Discord Profil zurück, das mit dem Lichess Profil verknüpft ist."
