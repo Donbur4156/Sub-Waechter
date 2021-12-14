@@ -38,6 +38,7 @@ async def commands(ctx):
     embed.add_field(name="**!join {dein lichessname}**", value=text, inline=False)
     text = "Gibt den Lichessnamen zurück, der mit deinem Discord Profil verknüpft ist."
     embed.add_field(name="**!whichname**", value=text, inline=False)
+    embed.set_thumbnail(url="https://yt3.ggpht.com/ytc/AKedOLQHjf9N6675Txbb1jJ6XKrJnTa7-UyNsiC3Ol-b=s900-c-k-c0x00ffffff-no-rj")
     await ctx.send(embed=embed)
 
 
@@ -74,6 +75,7 @@ async def modcommands(ctx):
     embed.add_field(name="**!swiss ID1 ID2 ID3 ...**", value=text, inline=False)
     text = "Fügt einen Bot-Account als Platzhalter in die Datenbank ein."
     embed.add_field(name="**!joinbot lichessname**", value=text, inline=False)
+    embed.set_thumbnail(url="https://yt3.ggpht.com/ytc/AKedOLQHjf9N6675Txbb1jJ6XKrJnTa7-UyNsiC3Ol-b=s900-c-k-c0x00ffffff-no-rj")
     await ctx.send(embed=embed)
 
 
