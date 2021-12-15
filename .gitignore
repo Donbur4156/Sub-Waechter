@@ -1,0 +1,32 @@
+
+# PyCharm
+.idea/
+output/
+src/
+
+# Config
+config.*
+
+# PIP Installer
+*pip.py
+
+# Chache
+__pycache__
+
+# Temp Files
+*.DS_Store
+*.tmp
+
+# Venv Enviroment
+venv
+venv/
+
+# Example
+!*.example
+
+# VSCode
+.vscode/
+.vs/
+
+# databases
+*.db
