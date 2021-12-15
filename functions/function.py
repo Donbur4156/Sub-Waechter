@@ -1,8 +1,11 @@
+from datetime import date, time
+from sqlite3.dbapi2 import Cursor, connect
 import requests
 import json
 import lichess.api
 import config
 import sqlite3
+import datetime
 
 
 def get_teamdata(id_team):
@@ -62,7 +65,7 @@ async def return_password():
     password = cursor.execute(sql, (config.serverid,))
     password = password.fetchone()[0]
     connection.close()
-    return password
+    return password 
 
 
 def sql_all(sql, parameter):
@@ -97,3 +100,15 @@ def get_swiss(swiss_id):
         column.append(tie_break)
         unique_result.append(column)
     return unique_result
+
+
+def write_note(discordid, moddiscordid, note):
+    date = datetime.datetime.now()
+    connection = sqlite3.connect(config.database)
+    cursor = connection.cursor()
+    cursor.execute("INSERT INTO usernotes (date, discordid, moddiscordid, note)"
+                   "VALUES (?, ?, ?, ?)",
+                   (date, discordid, moddiscordid, note))
+    connection.commit()
+    connection.close()
+    

@@ -56,6 +56,8 @@ async def modcommands(ctx):
     embed.add_field(name="**!saydiscord lichessname**", value=text, inline=False)
     text = "Löscht den Datensatz mit dem Lichess Profil."
     embed.add_field(name="**!delete lichessname**", value=text, inline=False)
+    text = "Hinterlegt eine Notiz für den Discord User."
+    embed.add_field(name="**!adduserlog discordUserID text**", value=text,inline=False)
     text = "Überprüft alle Team Member auf ihren Status."
     embed.add_field(name="**!check**", value=text, inline=False)
     text = "Gibt eine CSV Datei zurück mit allen eingetragenen Usern."
@@ -64,7 +66,7 @@ async def modcommands(ctx):
     embed.add_field(name="**!getpassword**", value=text, inline=False)
     text = "Ändert das aktuelle Passwort, welches im Bot gespeichert ist, in das neu angegebene."
     embed.add_field(name="**!changepassword neuesPasswort**", value=text, inline=False)
-    channel1 = bot.get_channel(820982762341007380)
+    channel1 = bot.get_channel(820982762341007380) #TODO: Channel klickbar machen; Als Schleife programmieren
     channel2 = bot.get_channel(776934646151512065)
     channel3 = bot.get_channel(820980777700294667)
     text = "Räumt den Kanal auf. Nur in folgenden Kanälen verfügbar:" \
@@ -79,7 +81,7 @@ async def modcommands(ctx):
     await ctx.send(embed=embed)
 
 
-@bot.command(aliases=['Join'])
+@bot.command(aliases=['Join']) # TODO: Log first entry; Log new try
 async def join(ctx, arg1):
     discordtag = str(ctx.author)
     discordid = ctx.author.id
@@ -299,7 +301,7 @@ async def whichname(ctx):
 
 
 @bot.command()
-async def check(ctx):
+async def check(ctx): #TODO: Log Status Änderung; Log Blacklist
     if not await authorization(ctx):
         return False
     data = f.get_teamdata(config.team)
@@ -457,7 +459,7 @@ async def getlist(ctx):
 
 
 @bot.command()
-async def delete(ctx, arg1):
+async def delete(ctx, arg1):#TODO: Log Userlöschung
     if not await authorization(ctx):
         return False
     lichess_user = arg1.lower()
@@ -477,6 +479,18 @@ async def delete(ctx, arg1):
     await send_embed_log(ctx, text, discord.Color.blue())
     connection.close()
     await ctx.message.delete(delay=120)
+
+
+@bot.command()
+async def adduserlog(ctx, arg1, *, note):
+    if not await authorization(ctx):
+        return False
+    f.write_note(arg1, str(ctx.author.id), note)
+    user = "<@" + str(arg1) + ">"
+    text = f"**Folgender Vermerk wurde hinzugefügt:**\n" \
+           f"**User:** {user}\n" \
+           f"**Vermerk:** {note}"
+    await send_embed_log(ctx, text, discord.Color.blue())
 
 
 @bot.command()
