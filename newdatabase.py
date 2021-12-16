@@ -24,4 +24,13 @@ sql = "CREATE TABLE config(" \
       "password TEXT)"
 cursor.execute(sql)
 
+sql = "CREATE TABLE usernotes(" \
+	"id INTEGER PRIMARY KEY," \
+	"date TEXT," \
+	"discordid INTEGER," \
+	"moddiscordid INTEGER," \
+	"note TEXT)"
+cursor.execute(sql)
+
+
 connection.close()
