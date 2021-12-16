@@ -71,7 +71,7 @@ async def return_password():
 def sql_all(sql, parameter):
     connection = sqlite3.connect(config.database)
     cursor = connection.cursor()
-    cursor.execute(sql, parameter)
+    cursor.execute(sql, (parameter,))
     return cursor.fetchall()
 
 
@@ -103,7 +103,7 @@ def get_swiss(swiss_id):
 
 
 def write_note(discordid, moddiscordid, note):
-    date = datetime.datetime.now()
+    date = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     connection = sqlite3.connect(config.database)
     cursor = connection.cursor()
     cursor.execute("INSERT INTO usernotes (date, discordid, moddiscordid, note)"

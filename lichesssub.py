@@ -1,3 +1,4 @@
+from sqlite3.dbapi2 import Cursor, Timestamp, connect
 import config
 import sqlite3
 from discord.ext import commands
@@ -40,6 +41,7 @@ async def commands(ctx):
     embed.add_field(name="**!whichname**", value=text, inline=False)
     embed.set_thumbnail(url="https://yt3.ggpht.com/ytc/AKedOLQHjf9N6675Txbb1jJ6XKrJnTa7-UyNsiC3Ol-b=s900-c-k-c0x00ffffff-no-rj")
     await ctx.send(embed=embed)
+    await ctx.message.delete(delay=120)
 
 
 @bot.command()
@@ -48,40 +50,63 @@ async def modcommands(ctx):
     embed = discord.Embed(title="**Mod Commands**", color=0x0D5EAF, description=text)
     text = "Zeigt alle verfügbaren Commands an."
     embed.add_field(name="**!commands**", value=text, inline=False)
+
     text = "Zeigt alle Commands für Moderatoren an."
     embed.add_field(name="**!modcommands**", value=text, inline=False)
-    text = "Gibt das Lichess Profil zurück, das mit dem Discord Profil verknüpft ist."
-    embed.add_field(name="**!saylichess discordUserID**", value=text, inline=False)
-    text = "Gibt das Discord Profil zurück, das mit dem Lichess Profil verknüpft ist."
-    embed.add_field(name="**!saydiscord lichessname**", value=text, inline=False)
-    text = "Löscht den Datensatz mit dem Lichess Profil."
-    embed.add_field(name="**!delete lichessname**", value=text, inline=False)
-    text = "Hinterlegt eine Notiz für den Discord User."
-    embed.add_field(name="**!adduserlog discordUserID text**", value=text,inline=False)
+    
     text = "Überprüft alle Team Member auf ihren Status."
     embed.add_field(name="**!check**", value=text, inline=False)
+    
     text = "Gibt eine CSV Datei zurück mit allen eingetragenen Usern."
     embed.add_field(name="**!getlist**", value=text, inline=False)
+    
+    text = "Fügt einen Bot-Account als Platzhalter in die Datenbank ein.\n\n" \
+        "-------------------------------------------------"
+    embed.add_field(name="**!joinbot lichessname**", value=text, inline=False)
+    
+    text = "Gibt das Lichess Profil zurück, das mit dem Discord Profil verknüpft ist."
+    embed.add_field(name="**!saylichess discordUserID**", value=text, inline=False)
+    
+    text = "Gibt das Discord Profil zurück, das mit dem Lichess Profil verknüpft ist."
+    embed.add_field(name="**!saydiscord lichessname**", value=text, inline=False)
+    
+    text = "Löscht den Datensatz mit dem Lichess Profil.\n\n" \
+        "-------------------------------------------------"
+    embed.add_field(name="**!delete lichessname**", value=text, inline=False)
+    
+    text = "Hinterlegt eine Vermerk für den Discord User."
+    embed.add_field(name="**!adduserlog discordUserID Vermerk**", value=text,inline=False)
+    
+    text = "Ruft die Vermerke für den Discord User ab."
+    embed.add_field(name="**!getuserlog discordUserID**", value=text, inline=False)
+    
+    text = "Löscht den Log Eintrag mit der LogID aus der Datenbank.\n\n" \
+        "-------------------------------------------------"
+    embed.add_field(name="**!deluserlog LogID**", value=text, inline=False)
+    
     text = "Gibt das aktuelle Passwort, welches im Bot gespeichert ist, wieder."
     embed.add_field(name="**!getpassword**", value=text, inline=False)
-    text = "Ändert das aktuelle Passwort, welches im Bot gespeichert ist, in das neu angegebene."
+    
+    text = "Ändert das aktuelle Passwort, welches im Bot gespeichert ist, in das neu angegebene.\n\n" \
+        "-------------------------------------------------"
     embed.add_field(name="**!changepassword neuesPasswort**", value=text, inline=False)
     channel1 = bot.get_channel(820982762341007380) #TODO: Channel klickbar machen; Als Schleife programmieren
     channel2 = bot.get_channel(776934646151512065)
     channel3 = bot.get_channel(820980777700294667)
+    
     text = "Räumt den Kanal auf. Nur in folgenden Kanälen verfügbar:" \
            f"\n{channel1}\n{channel2}\n{channel3}"
     embed.add_field(name="**!clean**", value=text, inline=False)
+    
     text = "Gibt das Ergebnis mehrerer Swiss Turniere als CSV zurück.\n" \
            "Als Argumente die IDs der Turniere anfügen."
     embed.add_field(name="**!swiss ID1 ID2 ID3 ...**", value=text, inline=False)
-    text = "Fügt einen Bot-Account als Platzhalter in die Datenbank ein."
-    embed.add_field(name="**!joinbot lichessname**", value=text, inline=False)
     embed.set_thumbnail(url="https://yt3.ggpht.com/ytc/AKedOLQHjf9N6675Txbb1jJ6XKrJnTa7-UyNsiC3Ol-b=s900-c-k-c0x00ffffff-no-rj")
     await ctx.send(embed=embed)
+    await ctx.message.delete(delay=120)
 
 
-@bot.command(aliases=['Join']) # TODO: Log first entry; Log new try
+@bot.command(aliases=['Join'])
 async def join(ctx, arg1):
     discordtag = str(ctx.author)
     discordid = ctx.author.id
@@ -122,6 +147,9 @@ async def join(ctx, arg1):
             in_team = await f.send_info_join(ctx.author)
             log_text = text + "\n\n" + in_team
             await send_embed_log(ctx, log_text, discord.Color.orange())
+        note = f"***join* ||** {user} versucht **{lichessid}** zu verknüpfen --> " \
+               f"{user} bereits mit {lichess_id} verknüpft."
+        f.write_note(discordid, config.bot, note)
         return False
     sql = "SELECT * FROM lichesssub WHERE lichessid=?"
     cursor.execute(sql, (lichessid,))
@@ -133,6 +161,9 @@ async def join(ctx, arg1):
         await ctx.author.send(text)
         await send_embed_log(ctx, text, discord.Color.orange())
         await ctx.message.delete(delay=120)
+        note = f"***join* ||** {user} versucht **{lichessid}** zu verknüpfen --> " \
+               f"{lichessid} bereits mit einer anderen Discord ID verknüpft."
+        f.write_note(discordid, config.bot, note)
         return False
     cursor.execute("INSERT INTO lichesssub (discordtag, lichessid, twitch, patreon, discordid) "
                    "VALUES (?, ?, ?, ?, ?)",
@@ -146,6 +177,9 @@ async def join(ctx, arg1):
     team_info = await f.send_info_join(ctx.author)
     log_text = text + "\n\n" + team_info
     await send_embed_log(ctx, log_text, discord.Color.blue())
+    note = f"***join* ||** {user} versucht **{lichessid}** zu verknüpfen --> " \
+           f"{lichessid} wurde erfolgreich verknüpft."
+    f.write_note(discordid, config.bot, note)
 
 
 @join.error
@@ -301,7 +335,7 @@ async def whichname(ctx):
 
 
 @bot.command()
-async def check(ctx): #TODO: Log Status Änderung; Log Blacklist
+async def check(ctx):
     if not await authorization(ctx):
         return False
     data = f.get_teamdata(config.team)
@@ -315,9 +349,6 @@ async def check(ctx): #TODO: Log Status Änderung; Log Blacklist
     lost_user = []
     for i in data:
         lichess_id = i.get("id")
-        if i.get("tosViolation"):
-            text = f"Der User **{lichess_id}** hat gegen die Lichess Nutzungsbedinungen verstossen!"
-            faulty_list.append(text)
         sql = "SELECT * FROM lichesssub WHERE lichessid=?"
         cursor.execute(sql, (lichess_id,))
         dataset = cursor.fetchone()
@@ -331,30 +362,43 @@ async def check(ctx): #TODO: Log Status Änderung; Log Blacklist
                 roles = str(dc_member.roles)
                 user_mention = await get_mention(ctx, dc_id)
                 user_current = str(user_mention) + " (" + str(dataset[0]) + ")"
+                if i.get("tosViolation"):
+                    text = f"Der User **{lichess_id}** hat gegen die Lichess Nutzungsbedingungen verstossen!"
+                    faulty_list.append(text)
+                    note = f"***check* ||** {user_mention}: Lichess Account **{lichess_id}** geflaggt."
+                    f.write_note(dc_id, config.bot, note)
                 if config.role1 in roles or config.role2 in roles:
                     if config.role1 in roles and dataset[2] == 0:
                         sql = "UPDATE lichesssub SET twitch = 1 WHERE discordtag=?"
                         cursor.execute(sql, (dataset[0],))
                         connection.commit()
                         text = f"Dem User **{user_current}** wurde der Twitch Sub hinzugefügt!"
+                        note = f"***check* ||** {user_mention}: Twitch Sub hinzugefügt."
+                        f.write_note(dc_id, config.bot, note)
                         changes.append(text)
                     if config.role1 not in roles and dataset[2] == 1:
                         sql = "UPDATE lichesssub SET twitch = 0 WHERE discordtag=?"
                         cursor.execute(sql, (dataset[0],))
                         connection.commit()
                         text = f"Dem User **{user_current}** wurde der Twitch Sub entfernt!"
+                        note = f"***check* ||** {user_mention}: Twitch Sub entfernt."
+                        f.write_note(dc_id, config.bot, note)
                         changes.append(text)
                     if config.role2 in roles and dataset[3] == 0:
                         sql = "UPDATE lichesssub SET patreon = 1 WHERE discordtag=?"
                         cursor.execute(sql, (dataset[0],))
                         connection.commit()
                         text = f"Dem User **{user_current}** wurde der Patreon Status hinzugefügt!"
+                        note = f"***check* ||** {user_mention}: Patreon Status hinzugefügt."
+                        f.write_note(dc_id, config.bot, note)
                         changes.append(text)
                     if config.role2 not in roles and dataset[3] == 1:
                         sql = "UPDATE lichesssub SET patreon = 0 WHERE discordtag=?"
                         cursor.execute(sql, (dataset[0],))
                         connection.commit()
                         text = f"Dem User **{user_current}** wurde der Patreon Status entfernt!"
+                        note = f"***check* ||** {user_mention}: Patreon Status entfernt."
+                        f.write_note(dc_id, config.bot, note)
                         changes.append(text)
                 else:
                     sql = "UPDATE lichesssub SET patreon = 0, twitch = 0 WHERE discordtag=?"
@@ -362,6 +406,8 @@ async def check(ctx): #TODO: Log Status Änderung; Log Blacklist
                     connection.commit()
                     blacklist.append(f"{user_current}: **{dataset[1]}**")
                     blacklist_print += f"{str(dataset[1])}\n"
+                    note = f"***check* ||** {user_mention}: Twitch Sub und Patreon Status entfernt."
+                    f.write_note(dc_id, config.bot, note)
             except AttributeError:
                 text = f"Der User mit dem Discord tag **{dataset[0]}** und dem Lichess Profil" \
                        f" **{dataset[1]}** konnte auf diesem Server nicht gefunden werden!"
@@ -459,7 +505,7 @@ async def getlist(ctx):
 
 
 @bot.command()
-async def delete(ctx, arg1):#TODO: Log Userlöschung
+async def delete(ctx, arg1):
     if not await authorization(ctx):
         return False
     lichess_user = arg1.lower()
@@ -473,7 +519,9 @@ async def delete(ctx, arg1):#TODO: Log Userlöschung
         cursor.execute(sql, (lichess_user,))
         connection.commit()
         current = "<@" + str(data[4]) + ">"
-        text = f"Der Discord User {current} wurde aus der Datenbank entfernt!"
+        text = f"Der Discord User {current} (Lichess: {lichess_user}) wurde aus der Datenbank entfernt!"
+        note = "***delete* ||** " + text
+        f.write_note(data[4], str(ctx.author.id), note)
     else:
         text = "Dieses Lichess Profil ist mit keiner Discord Identität verknüpft!"
     await send_embed_log(ctx, text, discord.Color.blue())
@@ -485,13 +533,64 @@ async def delete(ctx, arg1):#TODO: Log Userlöschung
 async def adduserlog(ctx, arg1, *, note):
     if not await authorization(ctx):
         return False
+    if len(note) > 150:
+        user = "<@" + str(ctx.author.id) + ">"
+        text = user + f", der Vermerk ist mit {len(note)} Zeichen zu lang! Vermerke dürfen maximal 150 Zeichen lang sein."
+        msg = await ctx.send(text)
+        await msg.delete(delay=120)
+        await ctx.message.delete(delay=120)
+        return False
+    note = "***modlog* ||** " + note
     f.write_note(arg1, str(ctx.author.id), note)
     user = "<@" + str(arg1) + ">"
     text = f"**Folgender Vermerk wurde hinzugefügt:**\n" \
            f"**User:** {user}\n" \
            f"**Vermerk:** {note}"
     await send_embed_log(ctx, text, discord.Color.blue())
+    await ctx.message.delete(delay=120)
 
+
+@bot.command()
+async def getuserlog(ctx, arg1):
+    if not await authorization(ctx):
+        return False
+    sql = "SELECT * FROM usernotes WHERE discordid=?"
+    notes = f.sql_all(sql, int(arg1))
+    log_channel = bot.get_channel(config.channel_log_id)
+    user_mention = "<@" + str(ctx.author.id) + ">"
+    text = f"User Log von <@{arg1}> abgerufen durch {user_mention}\n" \
+        f"Es wurden **{len(notes)} Einträge** gefunden.\n\n"
+    for note in notes:
+        mod = f"<@{note[3]}>"
+        text += f"**ID:** {note[0]}; **Time:** {note[1]}; **Mod:** {mod}\n{note[4]}\n\n"
+    await send_embed_log(ctx, text, discord.Color.purple())
+    await ctx.message.delete(delay=120)
+
+
+@bot.command()
+async def deluserlog(ctx, arg1):
+    if not await authorization(ctx):
+        return False
+    connection = sqlite3.connect(config.database)
+    cursor = connection.cursor()
+    sql = "SELECT * FROM usernotes WHERE id=?"
+    cursor.execute(sql, (arg1,))
+    data = cursor.fetchone()
+    if data:
+        sql = "DELETE FROM usernotes WHERE id=?"
+        cursor.execute(sql, (arg1,))
+        connection.commit()
+        mod = f"<@{data[3]}>"
+        text = f"Der Vermerk mit der ID **{arg1}** wurde gelöscht.\n" \
+            f"**Time:** {data[1]}; **Mod:** {mod}\n{data[4]}"
+        await send_embed_log(ctx, text, discord.Color.green())
+    else:
+        user = "<@" + str(ctx.author.id) + ">"
+        text = user + f", der Vermerk wurde nicht gefunden."
+        msg = await ctx.send(text)
+        await msg.delete(delay=120)
+    await ctx.message.delete(delay=120)
+        
 
 @bot.command()
 async def getpassword(ctx):

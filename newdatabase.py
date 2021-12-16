@@ -26,7 +26,7 @@ cursor.execute(sql)
 
 sql = "CREATE TABLE usernotes(" \
 	"id INTEGER PRIMARY KEY," \
-	"date INTEGER," \
+	"date TEXT," \
 	"discordid INTEGER," \
 	"moddiscordid INTEGER," \
 	"note TEXT)"
