@@ -30,3 +30,6 @@ venv/
 
 # databases
 *.db
+
+# Chache
+__pycache__

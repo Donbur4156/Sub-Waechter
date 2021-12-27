@@ -65,7 +65,7 @@ async def return_password():
     password = cursor.execute(sql, (config.serverid,))
     password = password.fetchone()[0]
     connection.close()
-    return password 
+    return password
 
 
 def sql_all(sql, parameter):
