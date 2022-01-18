@@ -30,33 +30,6 @@ async def on_ready():
     print("I'm online!")
 
 
-@bot.event
-async def on_member_update(before, after):
-    if before.roles == after.roles:
-        return
-    auditlog = await bot.http.get_audit_logs(guild_id=config.serverid, limit=3, action_type=25)
-    audit_entry = auditlog['audit_log_entries']
-    '''[0]
-    changes = audit_entry['changes']
-    for change in changes:
-        changed_role = change['new_value'][]'''
-    now = datetime.datetime.now()
-    print(f"\n--- Event Member Update triggered: ---\nTime: {now}\n")
-    for entry in audit_entry:
-        id = entry['id']
-        target_id = entry['target_id']
-        print(f"Entry ID: {id}\nUser mit ID: '{target_id}' mit diesen Änderungen:")
-        changes = entry['changes']
-        for index, change in enumerate(changes):
-            print(f"change number: {index}")
-            change_key = change['key']
-            for value in change['new_value']:
-                change_role = value['name']
-                print(f"{change_key}: {change_role}")
-        print("")
-    print("--- Event END ---\n")
-
-
 @bot.command()
 async def commands(ctx):
     text = "Registriert euch hier für das Lichess Subscriber Team von TBG.\n" \
